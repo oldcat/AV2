@@ -3,4 +3,5 @@
 13/03/12 - Murray started this change log!
 13/03/12 - Murray wrote input2image which does (I think) the same as input2im
   except using Matlab functions and does it in 0.083 secs instead of 0.755!
-
+13/03/12 - Murray added esthomog function from website and the remap script
+  which we will modify later to project field image onto frames
