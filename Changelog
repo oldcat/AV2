@@ -1,0 +1,4 @@
+13/03/12 - Startup files all added
+13/03/12 - Oldcat wrote input2im to convert the input matlab files into the correct format
+13/03/12 - Murray started this change log!
+13/03/12 - Murray wrote input2image which does (I think) the same as input2im except using Matlab functions and does it in 0.083 secs instead of 0.755!
