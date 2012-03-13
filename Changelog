@@ -8,5 +8,6 @@
   which we will modify later to project field image onto frames
 13/03/12 - Murray changed remap file to remap the field picture given some hard
   coded points of the background, just to try really, not useful code yet
-
+13/03/12 - Murray discovered 4:6 *are* the rgb values, he found the real image!
+  He then wrote a function main to show this!
 
