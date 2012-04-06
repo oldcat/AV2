@@ -10,4 +10,6 @@
   coded points of the background, just to try really, not useful code yet
 13/03/12 - Murray discovered 4:6 *are* the rgb values, he found the real image!
   He then wrote a function main to show this!
+06/04/12 - Andrew edited this file to find out what timezone github's time 
+  stamps are in. Useful!
 
