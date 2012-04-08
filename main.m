@@ -51,7 +51,7 @@ function main()
            
         planeBin = getlargest(myCleanup(better>0.94,0,2));
         
-        newPlaneBin = findPlane(planeBin);
+        %newPlaneBin = findPlane(planeBin);
          
          
         %figure(i) 
