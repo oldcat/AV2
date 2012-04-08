@@ -34,7 +34,7 @@ function main()
         %figure(6)
         manInIm = zeros(480, 640, 3);
         % put in background
-        bgBin = (showable<0.07) | (showable>0.3);
+        bgBin = (showable<0.03) | (showable>0.45);
         manInIm(:,:,1) = bgIm(:,:,1) .* double(bgBin);
         manInIm(:,:,2) = bgIm(:,:,2) .* double(bgBin);
         manInIm(:,:,3) = bgIm(:,:,3) .* double(bgBin);
@@ -45,7 +45,7 @@ function main()
         manInIm(:,:,3) = manInIm(:,:,3) + (fgIm(:,:,3) .* double(~bgBin));
            
            
-        figure(i) 
+        figure(1) 
         imshow(manInIm)
         
 end
