@@ -26,8 +26,7 @@ function outimage = remapField()
     end
     end
 
-    figure(1)
-    imshow(outimage/255)
+    outimage = outimage/255;
 
     % save transfered image
     %imwrite(uint8(outimage),'remapOutput.jpg','jpg');

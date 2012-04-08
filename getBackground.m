@@ -1,6 +1,5 @@
-function outim = getBackground
+function [depths, outim] = getBackground
 
     input = importdata('bindermat/xyzrgb_frame_0001.mat');
-    image = input2image(input);
+    [depths, image] = input2image(input);
     outim = overlay(image, remapField);
-    outim/255;
