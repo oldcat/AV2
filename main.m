@@ -49,7 +49,7 @@ function main()
         manInIm(:,:,2) = manInIm(:,:,2) + (fgIm(:,:,2) .* double(fgBin));
         manInIm(:,:,3) = manInIm(:,:,3) + (fgIm(:,:,3) .* double(fgBin));
            
-        planeBin = getlargest(mycleanup(better>0.94,0,2));
+        planeBin = getlargest(myCleanup(better>0.94,0,2));
         
         newPlaneBin = findPlane(planeBin);
          
@@ -57,7 +57,7 @@ function main()
         %figure(i) 
         %imshow(manInIm)
         figure(i+36)
-        imshow(mycleanup(planeBin,4,4))
+        imshow(myCleanup(planeBin,4,4))
         %figure(i+72)
-        %imshow(mycleanup(better>0.94,0,2))
+        %imshow(myCleanup(better>0.94,0,2))
 end
