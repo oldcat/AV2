@@ -24,8 +24,14 @@ function main()
         %figure(4)
         %hist(showable(:),200);
         
-        better = showable .* double(showable<0.5);
-        better = better-min(min(better));
+        
+
+        fgBin = (showable>=0.03) & (showable<=0.45);
+        fgCln = myCleanup(fgBin,2,3);
+        
+        better = fgDepths(:,:,3)-min(min(fgDepths(:,:,3)));
+        better = better/max(max(better));
+        better = better .* double(fgBin);
         better = better/max(max(better));
         
         %figure(5)
@@ -34,18 +40,24 @@ function main()
         %figure(6)
         manInIm = zeros(480, 640, 3);
         % put in background
-        bgBin = (showable<0.03) | (showable>0.45);
-        manInIm(:,:,1) = bgIm(:,:,1) .* double(bgBin);
-        manInIm(:,:,2) = bgIm(:,:,2) .* double(bgBin);
-        manInIm(:,:,3) = bgIm(:,:,3) .* double(bgBin);
+        manInIm(:,:,1) = bgIm(:,:,1) .* double(~fgBin);
+        manInIm(:,:,2) = bgIm(:,:,2) .* double(~fgBin);
+        manInIm(:,:,3) = bgIm(:,:,3) .* double(~fgBin);
         
         % put in foreground
-        manInIm(:,:,1) = manInIm(:,:,1) + (fgIm(:,:,1) .* double(~bgBin));
-        manInIm(:,:,2) = manInIm(:,:,2) + (fgIm(:,:,2) .* double(~bgBin));
-        manInIm(:,:,3) = manInIm(:,:,3) + (fgIm(:,:,3) .* double(~bgBin));
+        manInIm(:,:,1) = manInIm(:,:,1) + (fgIm(:,:,1) .* double(fgBin));
+        manInIm(:,:,2) = manInIm(:,:,2) + (fgIm(:,:,2) .* double(fgBin));
+        manInIm(:,:,3) = manInIm(:,:,3) + (fgIm(:,:,3) .* double(fgBin));
            
-           
-        figure(1) 
-        imshow(manInIm)
+        planeBin = getlargest(mycleanup(better>0.94,0,2));
         
+        newPlaneBin = findPlane(planeBin);
+         
+         
+        %figure(i) 
+        %imshow(manInIm)
+        figure(i+36)
+        imshow(mycleanup(planeBin,4,4))
+        %figure(i+72)
+        %imshow(mycleanup(better>0.94,0,2))
 end
