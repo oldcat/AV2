@@ -45,14 +45,15 @@ function main2D()
         manInIm(:,:,2) = manInIm(:,:,2) + (fgIm(:,:,2) .* double(fgBin));
         manInIm(:,:,3) = manInIm(:,:,3) + (fgIm(:,:,3) .* double(fgBin));
            
-        planeBin = getlargest(myCleanup(better>0.94,0,2));
+        planeBin = getlargest(myCleanup(better>0.936,0,2));
         finalIm = manInIm;
 
         if (getArea(planeBin)>50)
             [r,c] = find(bwperim(planeBin,4)==1);
             % Do not need to remove spurs as when gelargest was used earlier,
             % it looked for 4 connectivity, so no dangling spurs on image.
-            [tr,tc] = boundarytrack(r,c,480,640,0);
+            [sr,sc] = removespurs(r,c,480,640,0);
+            [tr,tc] = boundarytrack(sr,sc,480,640,0);
             [numlines, datalines] = findcorners(tr,tc,480,640,0,10);
             lengths = lineLengths(numlines, datalines);
             corners = getAllCorners(lengths, numlines, datalines, 0);
