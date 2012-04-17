@@ -31,10 +31,11 @@ function orderedCorners = getAllCorners(lengths, numlines, datalines, figN)
         sign = -1;
     end
 
-    corners(3,1) = corners(1,1) - abs(xDiff) * 0.9;
-    corners(3,2) = corners(1,2) + yDiff * sign * 0.9;
-    corners(4,1) = corners(2,1) - abs(xDiff) * 0.9;
-    corners(4,2) = corners(2,2) + yDiff * sign * 0.9;
+    ratio = 0.85;
+    corners(3,1) = corners(1,1) - abs(xDiff) * ratio;
+    corners(3,2) = corners(1,2) + yDiff * sign * ratio;
+    corners(4,1) = corners(2,1) - abs(xDiff) * ratio;
+    corners(4,2) = corners(2,2) + yDiff * sign * ratio;
 
     orderedCorners = zeros(4,2);
     if xDiff > 0

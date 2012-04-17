@@ -4,15 +4,16 @@ function main2D()
     outputImages = cell(36);
 
     for i = 1:36
+        fprintf('%d\n', i);
         filename = ['bindermat/xyzrgb_frame_' sprintf('%04d', i) '.mat'];
     
         [fgDepths, fgIm] = input2image(importdata(filename));
-        
+
         %figure(1)
         %imshow(bgIm)
         %figure(2)
         %imshow(fgIm)
-        
+
         newDepth = abs(bgDepths(:,:,3) - fgDepths(:,:,3));
         showable = newDepth-min(min(newDepth));
         showable = showable/max(max(showable));
@@ -45,19 +46,50 @@ function main2D()
         manInIm(:,:,2) = manInIm(:,:,2) + (fgIm(:,:,2) .* double(fgBin));
         manInIm(:,:,3) = manInIm(:,:,3) + (fgIm(:,:,3) .* double(fgBin));
            
-        planeBin = getlargest(myCleanup(better>0.936,0,2));
+        sortedBetter = sort(better(:), 'descend');
+        threshold = sortedBetter(13000);
+        %planeBin = newGetLargest(myCleanup(better>threshold,0,2));%0.936,0,2));
+        planeBin = newGetLargest(myCleanup(better>0.936,0,2));
+%        figure(i);
+%        imshow(planeBin)
+        countPixels = sum(sum(planeBin==1));
+        counts = find(sum(planeBin)>0);
+        if (countPixels > 8000) | ((countPixels > 5000) & (counts(end) < 600) & (counts(1) > 40))
+            planeBin = newGetLargest(myCleanup(better>threshold,0,2));
+        else
+            planeBin = zeros(480,640);
+        end
+%        planeBin = newGetLargest(myCleanup(fgDepths(41:466,21:598,3)>=-1.54,0,2));
         finalIm = manInIm;
+%        figure(1);
+%        imshow(planeBin)
+%        fprintf('=> %d\n', countPixels);
+%        imwrite(planeBin,  ['using_better/normalisationBest_' sprintf('%04d', i) '.png'], 'png');
+%        imwrite(planeBin,  ['using_fgDepths/noNormalisationBest_' sprintf('%04d', i) '.png'], 'png');
 
         if (getArea(planeBin)>50)
             [r,c] = find(bwperim(planeBin,4)==1);
-            % Do not need to remove spurs as when gelargest was used earlier,
-            % it looked for 4 connectivity, so no dangling spurs on image.
-            [sr,sc] = removespurs(r,c,480,640,0);
-            [tr,tc] = boundarytrack(sr,sc,480,640,0);
-            [numlines, datalines] = findcorners(tr,tc,480,640,0,10);
+            [sr,sc] = newRemoveSpurs(r,c,480,640,0);
+            [tr,tc] = newBoundaryTrack(sr,sc,480,640,0);
+            attemptCount = 0;
+            while length(tr) < 20 & length(r) > 100
+                attemptCount = attemptCount + 1;
+                toRemove = zeros(1,length(tr));
+                for j = 1 : length(tr)
+                    toRemove(j) = find(r==tr(j) & c==tc(j));
+                end
+                r(toRemove) = [];
+                c(toRemove) = [];
+                [r,c] = newRemoveSpurs(r,c,480,640,0);
+                [sr,sc] = newRemoveSpurs(r,c,480,640,0);
+                [tr,tc] = newBoundaryTrack(sr,sc,480,640,0);
+%                figure(attemptCount+2);
+%                imshow(setPixels([tr,tc]))
+            end
+            [numlines, datalines] = newFindCorners(tr,tc,480,640,0,10);
             lengths = lineLengths(numlines, datalines);
             corners = getAllCorners(lengths, numlines, datalines, 0);
-            finalIm = remapVideo(manInIm, corners, i);
+            finalIm = remapVideo(i, manInIm, corners, 0);
         end
 
         %figure(i)
@@ -68,8 +100,10 @@ function main2D()
         %imshow(myCleanup(better>0.94,0,2))
 
        outputImages{i} = finalIm;
+        
     end
 
+    figure(1000);
     aviWriter(outputImages);
 
 % imwrite(planeBin,'~/Desktop/AV2/planeBin.jpg','jpg');

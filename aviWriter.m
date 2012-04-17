@@ -8,7 +8,5 @@ function aviWriter(images);
       image = images{i};
       imshow(image);
       writeVideo(vw,getframe);
-%      imshow(uint8(image));
-%      writeVideo(vw,getframe(gcf));
     end
     close(vw); 
