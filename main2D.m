@@ -67,6 +67,8 @@ function main2D()
 %        imwrite(planeBin,  ['using_better/normalisationBest_' sprintf('%04d', i) '.png'], 'png');
 %        imwrite(planeBin,  ['using_fgDepths/noNormalisationBest_' sprintf('%04d', i) '.png'], 'png');
 
+%        finalIm = zeros(480,640,3);
+
         if (getArea(planeBin)>50)
             [r,c] = find(bwperim(planeBin,4)==1);
             [sr,sc] = newRemoveSpurs(r,c,480,640,0);
@@ -90,6 +92,7 @@ function main2D()
             lengths = lineLengths(numlines, datalines);
             corners = getAllCorners(lengths, numlines, datalines, 0);
             finalIm = remapVideo(i, manInIm, corners, 0);
+%            finalIm = remapVideo(i, finalIm, corners, 0);
         end
 
         %figure(i)
@@ -99,11 +102,12 @@ function main2D()
         %figure(i+72)
         %imshow(myCleanup(better>0.94,0,2))
 
-       outputImages{i} = finalIm;
-        
+        outputImages{i} = finalIm;
+%        imwrite(finalIm, ['~/Desktop/AV2/Binaries2D/' sprintf('%04d', i) '.jpg'],'jpg');
+
     end
 
     figure(1000);
-    aviWriter(outputImages);
+%    aviWriter(outputImages);
 
 % imwrite(planeBin,'~/Desktop/AV2/planeBin.jpg','jpg');
