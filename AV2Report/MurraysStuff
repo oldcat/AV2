@@ -1,0 +1,6 @@
+To overlay the image of the field onto the background, we wrote a Matlab function that imports the image of the field and remaps it to the desired size using homographic transfer. The function, called remapField, was based on remap.m from the IVR website.
+
+Firstly, the algorithm gets the list of points that lie on the perimiter of the binary image, using Matlab's bwperim function.
+Secondly, the list of points is put through a function called newRemoveSpurs, which is a slightly modified version of the removespurs.m code from the AV website. The function is designed to remove pixels that 
+Then it goes on to remove danlging pixels, by going through all of the pixels and removing those that have at most 1 neighbour in the 8 connecting pixels.
+Thirdly, the modified list of points was put through a function called newBoundaryTrack similarly based on boundarytrack.m from the AV website.

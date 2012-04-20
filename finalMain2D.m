@@ -7,6 +7,7 @@ function main2D()
         fprintf('%d\n', i);
         filename = ['bindermat/xyzrgb_frame_' sprintf('%04d', i) '.mat'];
         [fgDepths, fgIm] = input2image(importdata(filename));
+%        bgIm = overlay(fgIm, remapField);
 
         newDepth = abs(bgDepths(:,:,3) - fgDepths(:,:,3));
         showable = newDepth-min(min(newDepth));
