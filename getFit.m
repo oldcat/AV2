@@ -4,16 +4,23 @@
 %       
 %       Ax + By + Cz = D
 %
-function [A, B, C, D] = getFit(p1, p2, p3)
+function [A, B, C, D] = getFit(points, noise)
 
-    % find two vectors in the plane
-    v12 = p2-p1;
-    v13 = p3-p1;
+    dimP = size(points);
+    numPoints = dimP(2);
     
-    % get cross product
-    cp = cross(v12, v13);
+    matX = [];
+    matY = [];
     
-    A = cp(1);
-    B = cp(2);
-    C = cp(3);
-    D = cp(1)*p1(1) + cp(2)*p1(2) + cp(3)*p1(3);
+    for i = 1:numPoints
+        matX = [matX; points(1,i) points(2,i) 1];
+        matY = [matY; points(3,i)];        
+    end
+
+    weights = matX\matY;
+%    weights = (inv((matX'*matX)+(noise*eye(3)))*matX')*matY; %+(noise*eye(dimX(2)));
+    
+    A = weights(1);
+    B = weights(2);
+    C = -1;
+    D = -weights(3);
