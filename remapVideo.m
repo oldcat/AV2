@@ -2,6 +2,9 @@ function outimage = remapVideo(i, image, corners, figN)
     inImage = importdata(['dramchip/' sprintf('%d',i-10) '.jpg'], 'jpg');
     topImage = single(inImage)/255;
     [h,w,c] = size(topImage);
+%    topImage = ones(480,640,3);
+%    [h,w,c] = size(topImage);
+
 
     UV=zeros(4,2);
     XY=zeros(4,2);
