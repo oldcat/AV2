@@ -1,0 +1,4 @@
+We have been given the task of processing data taken from a Kinect [reference, http://www.xbox.com/en-US/kinect] sensor and using this to make changes to the video. In the 36 frame video a man is shown walking past a wall holding a black leaverarch folder in his swinging arm as he walks. This video is to be adapted firstly to change the bakground the man walks across to an image of a field of poppies. This given image would be placed within the section of wall shown in red in figure ***IntroImage1.jpg. The second adaptation is to place a video, of our choice, within the bounds of the folder the man is carrying in each frame so that video plays as he walks. For that reason we have chosen a video called Dramatic Chipmunk, frames in figure ***IntroImage2.jpg.
+
+
+
