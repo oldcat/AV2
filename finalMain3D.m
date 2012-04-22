@@ -1,10 +1,10 @@
-function finalMain3D()
+function [fgCln, manInIm, finalIm] = finalMain3D()
 
     [bgDepths, bgIm] = getBackground;
     outputImages = cell(36);
     outputBins = cell(36);
 
-    for i = 1:36
+    for i = 18:18
         fprintf('%d\n', i);
         filename = ['bindermat/xyzrgb_frame_' sprintf('%04d', i) '.mat'];
         [fgDepths, fgIm] = input2image(importdata(filename));
@@ -79,11 +79,12 @@ function finalMain3D()
         end
 
        imwrite(finalBin, ['~/Desktop/AV2/Binaries3D/newBin' sprintf('%02d',i) '.png'],'png')
+       imwrite(finalIm, ['~/Desktop/AV2/Binaries3D/finalIm' sprintf('%02d',i) '.png'],'png')
 
        outputImages{i} = finalIm;
         
     end
 
-    figure(1000);
-    aviWriter(outputImages);
+    %figure(1000);
+    %aviWriter(outputImages);
 

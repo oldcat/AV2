@@ -1,7 +1,7 @@
 function aviWriter(images);
 
     vw = VideoWriter('AV_movie.avi');
-    vw.FrameRate = 25;
+    vw.FrameRate = 6;
     vw.open();
 
     for i = 1 : 36
