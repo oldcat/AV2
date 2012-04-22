@@ -1,0 +1,11 @@
+Image Data
+
+The given data was in two parts, the first was a set of 36 images with width 640 pixels and height 480 pixels. These make up the frames of the original video split into red, green and blue components. Around the edges of objects in the image, especially around the edges of the man there tend to be pixels in the image that are just left white. This 
+
+Depth Data
+
+The second section of the data is the depth points. These correspond to each pixel's location in space giving them an x, y and z co-ordinate. The z component describes the depth into the image, the x the position from left to right and the y component the position from top to bottom.
+
+On closer analysis it was seen that the z component of this data was stored effectively in countour lines as can be seen in figure ***DataImage1.png. In this image we can see the boundary lines between the planes in which each pixel's z value is identical. It can be seen from the colouring that the contour lines that make up the vast majority of the image have values between -1.25 and -3. However there are also certain points with value 0, these pixels seem to be those where the Kinect Sensor cannot get a depth reading or is confused by steep edges in the depth data for example on the right hand endge of the folder. These artefacts in the data are not present around entire edges so are not useful for detecting the edges of objects. THey appear mostly to occur on pixels that are a part of the background so when we are separating background and foreground we should ensure they are included in the background as a rule.
+
+The distance between the contours in our background data is approximately 0.0013, this means that we have an expected noise level of half this value as the values on boundaries between contours will be that distance from the real value. This noise level would be accurate if the kinect sensor was 100% accurate which no sensor is so in reality the expected noise level will be higher than this value and amplified by the fact that an incorrect reading must be at least 0.0013 off.
