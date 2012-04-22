@@ -1,2 +1,10 @@
 \contentsline {chapter}{\numberline {1}Introduction}{1}
-\contentsline {chapter}{Bibliography}{3}
+\contentsline {section}{\numberline {1.1}Data Structure Modification}{2}
+\contentsline {chapter}{\numberline {2}Extracting the Man}{3}
+\contentsline {chapter}{\numberline {3}Overlaying the Field Image}{5}
+\contentsline {chapter}{\numberline {4}Extracting the Black Quadrilateral}{7}
+\contentsline {chapter}{\numberline {5}Overlaying the Black Quadrilateral}{9}
+\contentsline {section}{\numberline {5.1}Corner Finding}{9}
+\contentsline {chapter}{\numberline {6}Conclusion}{11}
+\contentsline {chapter}{\numberline {7}Inclusion of Code}{13}
+\contentsline {chapter}{Bibliography}{15}

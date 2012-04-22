@@ -1,4 +1,4 @@
-This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=pdflatex 2011.8.31)  20 APR 2012 21:08
+This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=pdflatex 2011.8.31)  22 APR 2012 16:48
 entering extended mode
  %&-line parsing enabled.
 **AVReport.tex
@@ -102,7 +102,7 @@ LaTeX Font Info:    ... okay on input line 7.
 ! Undefined control sequence.
 <argument> ...kip 1em plus 1fil {\large \@project 
                                                   } \\ {\large \@degree \par...
-l.22 \maketitle
+l.21 \maketitle
                
 ? 
 
@@ -112,25 +112,25 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.22 \maketitle
+l.21 \maketitle
                
 ? 
 ! Undefined control sequence.
 <argument> ...rge \@project } \\ {\large \@degree 
                                                   \par } \vfil {\normalsize ...
-l.22 \maketitle
+l.21 \maketitle
                
 ? 
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <12> on input line 22.
+(Font)              <12> on input line 21.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 22.
+(Font)              <8> on input line 21.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 22.
+(Font)              <6> on input line 21.
 ! Extra alignment tab has been changed to \cr.
 <recently read> \endtemplate 
                              
-l.22 \maketitle
+l.21 \maketitle
                
 ? 
 [1
@@ -148,29 +148,54 @@ l.22 \maketitle
 
 ]
  1.
-[1
+<IntroImage1.jpg, id=17, 788.9475pt x 609.27625pt>
+File: IntroImage1.jpg Graphic file (type jpg)
+ <use IntroImage1.jpg>
+<IntroImage2.jpg, id=18, 1927.2pt x 722.7pt>
+File: IntroImage2.jpg Graphic file (type jpg)
+ <use IntroImage2.jpg> [1
 
-] [2
+ <./IntroImage1.jpg> <./IntroImage2.jpg>] [2]
+ 2.
+[3
+
+] [4
 
 ]
+ 3.
+[5] [6
 
-LaTeX Warning: Empty `thebibliography' environment on input line 36.
+]
+ 4.
+[7] [8
 
-[3] (./AVReport.aux) ) 
+]
+ 5.
+[9] [10
+
+]
+ 6.
+[11] [12
+
+]
+ 7.
+[13] [14
+
+] [15] (./AVReport.aux) ) 
 Here is how much of TeX's memory you used:
- 997 strings out of 256216
- 12213 string characters out of 1917072
- 59501 words of memory out of 1500000
- 4315 multiletter control sequences out of 10000+200000
- 7939 words of font info for 28 fonts, out of 1200000 for 2000
+ 1015 strings out of 256216
+ 12489 string characters out of 1917072
+ 61524 words of memory out of 1500000
+ 4330 multiletter control sequences out of 10000+200000
+ 8545 words of font info for 30 fonts, out of 1200000 for 2000
  645 hyphenation exceptions out of 8191
- 27i,9n,21p,203b,225s stack positions out of 5000i,500n,6000p,200000b,15000s
-</usr/share/texmf/fonts/type1/bluesky/cm/cmbx12.pfb></usr
-/share/texmf/fonts/type1/bluesky/cm/cmr12.pfb></usr/share/texmf/fonts/type1/blu
-esky/cm/cmr17.pfb></usr/share/texmf/fonts/type1/bluesky/cm/cmsl12.pfb>
-Output written on AVReport.pdf (7 pages, 26936 bytes).
+ 27i,9n,21p,746b,225s stack positions out of 5000i,500n,6000p,200000b,15000s
+</usr/share/texmf/fonts/type1/bluesky/cm/cmbx12.pfb></
+usr/share/texmf/fonts/type1/bluesky/cm/cmr12.pfb></usr/share/texmf/fonts/type1/
+bluesky/cm/cmr17.pfb></usr/share/texmf/fonts/type1/bluesky/cm/cmsl12.pfb>
+Output written on AVReport.pdf (19 pages, 710995 bytes).
 PDF statistics:
- 42 PDF objects out of 1000 (max. 8388607)
+ 82 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 131072)
- 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 11 words of extra memory for PDF output out of 10000 (max. 10000000)
 

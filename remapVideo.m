@@ -1,5 +1,5 @@
 function outimage = remapVideo(i, image, corners, figN)
-    filename = ['~/Desktop/AV2/dramchip/' sprintf('%d',i) '.jpg'];
+    filename = ['~/Desktop/AV2/dramchip/' sprintf('%d',i-10) '.jpg'];
     inImage = importdata(filename, 'jpg');
     topImage = single(inImage)/255;
     [h,w,c] = size(topImage);

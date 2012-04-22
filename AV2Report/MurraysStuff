@@ -1,6 +1,37 @@
+HOMOGRAPHIC TRANSFER
 To overlay the image of the field onto the background, we wrote a Matlab function that imports the image of the field and remaps it to the desired size using homographic transfer. The function, called remapField, was based on remap.m from the IVR website.
 
+
+2D BINARY IMAGE
+Get closest pixels by trial and error threshold.
+Then use amount of pixels and location in image to determine if what was found was part of a full quadrilateral: i.e. not a stray pixel, not a partial quad
+
+
+BOUNDARY TRACKING
 Firstly, the algorithm gets the list of points that lie on the perimiter of the binary image, using Matlab's bwperim function.
 Secondly, the list of points is put through a function called newRemoveSpurs, which is a slightly modified version of the removespurs.m code from the AV website. The function is designed to remove pixels that 
 Then it goes on to remove danlging pixels, by going through all of the pixels and removing those that have at most 1 neighbour in the 8 connecting pixels.
 Thirdly, the modified list of points was put through a function called newBoundaryTrack similarly based on boundarytrack.m from the AV website.
+
+Then this was done repeatedly to remove spurs problem
+
+
+FINDING CORNERS
+
+1. Find leftmost point A
+2. Find rightmost point B
+3. Split points in set A− >B and B− >A, then on each do the following:
+
+3.1. Find line thru current segment endpoints X & Y
+3.2. Find point Z furthest from the line at distance d
+3.3. If d is less than a threshold, then this segment finished
+3.4. Otherwise, create new sets X− >Z and Z− >Y and recurse
+
+4. Go through list of lines calculating all the gradients
+5. Go through all lines containing a common endpoint
+5.1. If they are deemed similar gradients, merge lines by replacing them with a single line going from the dissimilar endpoints
+
+
+
+
+
