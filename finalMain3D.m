@@ -2,6 +2,7 @@ function finalMain3D()
 
     [bgDepths, bgIm] = getBackground;
     outputImages = cell(36);
+    outputBins = cell(36);
 
     for i = 1:36
         fprintf('%d\n', i);
@@ -39,15 +40,19 @@ function finalMain3D()
         countPixels = sum(sum(planeBin==1));
         counts = find(sum(planeBin)>0);
 
-        planeBin = newFindPlane3D(fgCln, fgDepths, 3, 40);
+        planeBin = newFindPlane3D(fgCln, fgDepths, 3, 50);
 
         if sum(sum(planeBin)) > 0
             planeBin = getFolder(fgDepths, planeBin, 0.01, 3, 0.001);
         else
             planeBin = planeBin;
         end
+        
+        imwrite(planeBin, ['~/Desktop/AV2/Binaries3D/bin' sprintf('%02d',i) '.png'],'png')
 
-        finalIm = manInIm;
+        finalIm  = manInIm;
+        finalBin = zeros(480,640,3);
+
 
         if (getArea(planeBin)>50)
             [r,c] = find(bwperim(planeBin,4)==1);
@@ -69,8 +74,11 @@ function finalMain3D()
             [numlines, datalines] = newFindCorners(tr,tc,480,640,0,10);
             lengths = lineLengths(numlines, datalines);
             corners = getAllCorners(lengths, numlines, datalines, 0);
-            finalIm = remapVideo(i, manInIm, corners, 0);
+            finalIm = remapVideo(i, manInIm, corners, 0, 0);
+            finalBin = remapVideo(i, finalBin, corners, 0, 1);
         end
+
+       imwrite(finalBin, ['~/Desktop/AV2/Binaries3D/newBin' sprintf('%02d',i) '.png'],'png')
 
        outputImages{i} = finalIm;
         

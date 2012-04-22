@@ -1,11 +1,18 @@
-function outimage = remapVideo(i, image, corners, figN)
-    filename = ['~/Desktop/AV2/dramchip/' sprintf('%d',i-10) '.jpg'];
-    inImage = importdata(filename, 'jpg');
-    topImage = single(inImage)/255;
-    [h,w,c] = size(topImage);
-%    topImage = ones(480,640,3);
-%    [h,w,c] = size(topImage);
+function outimage = remapVideo(i, image, corners, figN, binaries)
 
+    if nargin < 5
+        binaries = 0
+    end
+
+    if binaries == 0
+        filename = ['~/Desktop/AV2/dramchip/' sprintf('%d',i) '.jpg'];
+        inImage = importdata(filename, 'jpg');
+        topImage = single(inImage)/255;
+        [h,w,c] = size(topImage);
+    else
+        topImage = ones(480,640,3);
+        [h,w,c] = size(topImage);
+    end
 
     UV=zeros(4,2);
     XY=zeros(4,2);

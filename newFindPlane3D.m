@@ -1,7 +1,5 @@
 function [planeBin] = newFindPlane3D(fgBin, depthPts, numPoints, searchDim)
 
-
-    
     if nargin < 3
         numPoints = 3;
     end
@@ -11,13 +9,15 @@ function [planeBin] = newFindPlane3D(fgBin, depthPts, numPoints, searchDim)
     end    
 
     fitTolerance = 0.01;
-    noise = 0.001;
+    noise = 0.002;
 
     dim = size(fgBin);
     
     [minX maxX, minY, maxY] = getBounds(fgBin);
     
     planeBin = zeros(dim);
+    bestQual = 0;
+   
     
     if (minX > 0)
         for r = 250:(searchDim/2):(maxY-searchDim)
@@ -26,13 +26,15 @@ function [planeBin] = newFindPlane3D(fgBin, depthPts, numPoints, searchDim)
                     tmpBin = zeros(dim(1),dim(2));
                     tmpBin(r:(r+searchDim-1),c:(c+searchDim-1)) = tmpBin(r:(r+searchDim-1),c:(c+searchDim-1)) + 1;
                     qual = getBestFit(depthPts,tmpBin,minX,maxX,minY,maxY,fitTolerance,numPoints,noise);
-                    % qual = getBestFit(depthPts(r:(r+searchDim-1),c:(c+searchDim-1),:),0.01,numPoints,0.001) 
+                    % qual = getBestFit(depthPts(r:(r+searchDim-1),c:(c+searchDim-1),:),0.01,numPoints,noise) 
                     if qual > 0.95
                         planeBin(r:(r+searchDim-1),c:(c+searchDim-1)) = ones(searchDim);
+                        bestQual = qual;
                     end                        
                 end
             end
         end
     end
     
+    planeBin = newGetLargest(planeBin);
     

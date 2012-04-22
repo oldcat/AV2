@@ -4,11 +4,11 @@ Data structure modification - Oldcat
 - colour images
 - depth data
 
-Extract man
-- background subtraction using depth data - Oldcat
-
 Overlay field image
 - homographic transfer - Murray
+
+Extract man
+- background subtraction using depth data - Oldcat
 
 Extract black quad
 - 2D get bin image - Murray

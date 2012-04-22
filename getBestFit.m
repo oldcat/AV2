@@ -15,13 +15,13 @@ function [bestQual bestParam] = getBestFit(fullArea,bin,minX,maxX,minY,maxY,fitT
     %       N        = 3      = numPoints
     %       psuccess = 0.87     (estimated from contour plots)
     %
-    for i = 1:7
+    for i = 1:20
         randP = getRanPointsNumber(surfacePoints,numPoints);
                
         points = [];
         
         for p = 1:numPoints
-            pos = num2posBin(randP(p), bin, minY, maxX);
+            pos = num2PosBin(randP(p), bin, minY, maxX);
             point = fullArea(pos(1),pos(2),:);
             points = [points [point(1); point(2); point(3)]];
         end
