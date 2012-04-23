@@ -1,0 +1,79 @@
+To try to improve performance we decided to look into finding the black quadrilateral by searching for flat planes in the image. A flat plane can be defined by an equation of the form:
+
+Ax + By + Cz + D = 0
+
+To find flat parts we scanned the image looking at successive 50 pixel by 50 pixel square sections. If these contained only foreground pixels as found in the binary images we had created earlier. For each section we had to decide if it described a flat part of the image. To do this we wanted to create a model plane that fitted the surface as well as possible. If that model plane fitted the points in the surface then we would know that that section was a flat plane.
+
+Fitting A Model Surface
+
+Knowing that our data was split into contours and that there was noise in the data we decided to use robust regression to create the model plane. We chose to use RanSaC[source 1, see bottom] as it's algorithm allows for a fit to be found to the inlier data ignoring outliers. In our case the algorithm[source 2, see bottom] does the following: 
+
+1. selects N pixel locations at random
+2. estimates plane that best fits these data points
+3. finds how many other pixels fit the model within a user given tolerance. Call this K.
+4. if K is big enough, accept fit and exit with success
+5. repeat  the above L times
+6. if you get here return the best fit found
+
+We wish to minimise the chances that our algorithm will fail which we can do by setting the parameters ideally. This can be done with the following equation. Where pfail is the probability of L consecutive failures and pg is the probability that a pixel is a good fit to the model.
+
+L =  log(pfail)
+    -------------
+    log(1-(pg)^N) 
+    
+From this we can see that, assuming pg < 1, the larger N is the smaller the denominator will be in the equation and hence the more runs we will need. Hence we wish to minimise N. To fit a flat 3D plane we need a minimum of 3 points so we shall set N to be 3. We wish to minimise the probability of failure, so set pfail to be 0.001, giving us an expectation of 1 failure in 1000 runs.
+
+We can approximate pg by looking at the images we have. Allowing a tolerance equal to half of the distance between contours we can then estimate the number of wrongly classified pixels from the flat plane in the depth data. To do this we took one image and created lines of best fit through each contour line. In each section in between we then calculated the number of pixels that were incorrectly classified assuming our line of best fit was the correct contour. This gave us an approximate pg of 0.87 as 87% of the points were classified correctly.
+
+From this we can calculate L, using the above equation, as 6.49 which rounds up to 7 runs to reduce the probability of failure to 0.001.
+
+Fitting a Plane To Our Points
+
+Once we have chosen our points we wish to fit a plane to them, to do this we want to create vectors between the points in the plane and use them to calculate a normal to the plane. From this we can calculate the parameters of the plane thus:
+
+***AndrewBitImage1.gif
+
+The normal is calculated by working out the cross product (cpx,cpy,cpz) of two of the vectors in the plane. By then taking any of the points (ax,ay,az) in the plane we can then calculate the equation of the plane thus:
+
+cpx * (x - ax) + cpy * (y - ay) + cpz * (z - az) = 0
+
+Checking The Fit Of Our Model Plane
+
+To decide how close a fit our plane is we checked every point within the section we had selected and compared it to the model plane we had created. At this point we allowed for some noise by setting a tolerance for points. This tolerance was set to 0.01 to allow for the noise caused both by the distance between contours and wrongly read distance measurements. We can then calculate the percentage of points that fit the plane within this tolerance and use this as a measure of the quality of our fit.
+
+Deciding If A Fit Is Good Enough
+
+Ideally we would like all of the points in the section we are fitting to be withing the given tolerance of the plane. However given the noise in the data we were willing to accept that the area we were examining described a plane if 99% of the points fitted within our tolerance.
+
+Finding The Quadrelateral
+
+Once we had found a planar area we then had to expand this to try and fit the whole quadrelateral. To do that we searched for pixels that were within the foreground binary and whose pixels fitted the plane we had found. To do this we simply selected the forground pixels whose depth points also fitted the plane we had found. We then used the given cleanup function to erode and dilate the binary image into a cleaner binary and then used get largest to ensure we only labelled one area as the quadrelateral.
+
+
+
+source 1:
+@article{Fischler:1981:RSC:358669.358692,
+ author = {Fischler, Martin A. and Bolles, Robert C.},
+ title = {Random sample consensus: a paradigm for model fitting with applications to image analysis and automated cartography},
+ journal = {Commun. ACM},
+ issue_date = {June 1981},
+ volume = {24},
+ number = {6},
+ month = jun,
+ year = {1981},
+ issn = {0001-0782},
+ pages = {381--395},
+ numpages = {15},
+ url = {http://doi.acm.org/10.1145/358669.358692},
+ doi = {10.1145/358669.358692},
+ acmid = {358692},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {automated cartography, camera calibration, image matching, location determination, model fitting, scene analysis},
+} 
+
+source 2:
+This website: http://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/FISHER/RANSAC/
+Author: Bob Fischer
+Year: 2002
+Accessed on: 22nd April 2012
