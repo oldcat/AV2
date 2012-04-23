@@ -9,7 +9,7 @@ function folderBin = getFolder(fgDepths, planeBin, tolerance, numPoints, noise)
 
     desired = 0.99;
     
-    for i = 1:1000
+    for i = 1:300
         [qual param] = getBestFit(fgDepths,planeBin,minX,maxX,minY,maxY,tolerance,numPoints,noise);      
 
         if qual > desired

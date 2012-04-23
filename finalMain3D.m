@@ -4,7 +4,7 @@ function [fgCln, manInIm, finalIm] = finalMain3D()
     outputImages = cell(36);
     outputBins = cell(36);
 
-    for i = 18:18
+    for i = 1:36
         fprintf('%d\n', i);
         filename = ['bindermat/xyzrgb_frame_' sprintf('%04d', i) '.mat'];
         [fgDepths, fgIm] = input2image(importdata(filename));
@@ -43,7 +43,7 @@ function [fgCln, manInIm, finalIm] = finalMain3D()
         planeBin = newFindPlane3D(fgCln, fgDepths, 3, 50);
 
         if sum(sum(planeBin)) > 0
-            planeBin = getFolder(fgDepths, planeBin, 0.01, 3, 0.001);
+            planeBin = getFolder(fgDepths, planeBin, 0.02, 3, 0.001);
         else
             planeBin = planeBin;
         end
@@ -85,6 +85,6 @@ function [fgCln, manInIm, finalIm] = finalMain3D()
         
     end
 
-    %figure(1000);
-    %aviWriter(outputImages);
+    figure(1000);
+    aviWriter(outputImages);
 

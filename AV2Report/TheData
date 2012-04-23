@@ -1,6 +1,6 @@
 Image Data
 
-The given data was in two parts, the first was a set of 36 images with width 640 pixels and height 480 pixels. These make up the frames of the original video split into red, green and blue components. Around the edges of objects in the image, especially around the edges of the man there tend to be pixels in the image that are just left white. This 
+The given data was in two parts, the first was a set of 36 images with width 640 pixels and height 480 pixels. These make up the frames of the original video split into red, green and blue components.
 
 Depth Data
 
