@@ -8,24 +8,57 @@
 \@writefile{lof}{\contentsline {figure}{\numberline {1.2}{\ignorespaces Dramatic Chipmunk frames}}{1}}
 \newlabel{intro2}{{1.2}{1}}
 \@writefile{toc}{\contentsline {section}{\numberline {1.1}Data Structure Modification}{2}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {2}Extracting the Man}{3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.1}Image Data}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.2}Depth Data}{2}}
+\newlabel{dataImage}{{1.1.2}{2}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {2}Overlaying the Field Image}{5}}
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {chapter}{\numberline {3}Overlaying the Field Image}{5}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {3}Extracting the Man}{7}}
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {chapter}{\numberline {4}Extracting the Black Quadrilateral}{7}}
+\newlabel{ftmi1}{{3}{7}}
+\newlabel{ftmi2}{{3}{8}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {4}Extracting the Black Quadrilateral}{9}}
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {chapter}{\numberline {5}Overlaying the Black Quadrilateral}{9}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.1}Hard Thresholding Using the Depth}{9}}
+\citation{Ransac}
+\citation{Fischler}
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}Plane Fitting Method}{10}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}Fitting A Model Surface}{10}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}Fitting a Plane To Our Points}{11}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.1}{\ignorespaces Calculating the normal of a plane}}{11}}
+\newlabel{bitImage}{{4.1}{11}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.3}Checking The Fit Of Our Model Plane}{11}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.4}Deciding If A Fit Is Good Enough}{12}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.5}Finding The Quadrelateral}{12}}
+\citation{AVLecture}
+\citation{MatlabIPT}
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}Overlaying the Black Quadrilateral}{13}}
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {section}{\numberline {5.1}Corner Finding}{9}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {6}Conclusion}{11}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.1}Boundary Tracking}{13}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.1}{\ignorespaces The boundary tracker would go down the route of the dangling pixel and terminate prematurely}}{14}}
+\newlabel{dangling}{{5.1}{14}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.2}{\ignorespaces Situations in which unnecessary pixels are removed}}{14}}
+\newlabel{unnecessary}{{5.2}{14}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.3}{\ignorespaces In this case the pixel highlighted in red would be wrongly removed using removespurs.m, causing the boundary tracker to fail}}{15}}
+\newlabel{failRemoveSpurs}{{5.3}{15}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.4}{\ignorespaces When the thickness at the end of the stray line is more than 1 this will cause the boundary tracker to fail}}{16}}
+\newlabel{spursProblem}{{5.4}{16}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.2}Corner Finding}{16}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.5}{\ignorespaces An example of the results of the corner finder before and after smoothing}}{18}}
+\newlabel{cornersProblem}{{5.5}{18}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {6}Conclusion}{19}}
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {chapter}{\numberline {7}Inclusion of Code}{13}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {7}Inclusion of Code}{21}}
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
 \bibcite{Kinect}{1}
-\@writefile{toc}{\contentsline {chapter}{Bibliography}{15}}
+\bibcite{Fischler}{2}
+\bibcite{Ransac}{3}
+\bibcite{AVLecture}{4}
+\bibcite{MatlabIPT}{5}
+\@writefile{toc}{\contentsline {chapter}{Bibliography}{23}}

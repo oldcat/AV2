@@ -201,7 +201,7 @@ However, it was in removing unecessary pixels that this function caused problems
 \begin{figure}[H]
 \centering
 \includegraphics[width=3.5in]{failRemoveSpurs.png}
-\caption{In this case the pixel highlighted in red would be wrongly removed using removespurs.m, causing the boundary tracker to fail}
+\caption{The boundary tracker would go down th}
 \label{failRemoveSpurs}
 \end{figure}
 
