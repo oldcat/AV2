@@ -49,7 +49,7 @@ function [numlines, datalines] = newFindCorners(r,c,H,W,figN,threshold)
     notdone = false;
     for i = 1 : numlines-1
       comparison = gradients(i)/gradients(i+1);
-      if comparison < 1.75 & comparison > 0.25
+      if comparison < 4 & comparison > 0.25
           datalines(i,3:4) = datalines(i+1,3:4);
           datalines(i+1,:) = [];
           gradients(i) = (datalines(i,4)-datalines(i,2))/(datalines(i,3)-datalines(i,1));
@@ -61,7 +61,7 @@ function [numlines, datalines] = newFindCorners(r,c,H,W,figN,threshold)
     end
     if datalines(numlines,3)==datalines(1,1) & datalines(numlines,4)==datalines(1,2)
       comparison = gradients(numlines)/gradients(1);
-      if comparison < 1.75 & comparison > 0.25
+      if comparison < 4 & comparison > 0.25
           datalines(1,1:2) = datalines(numlines,1:2);
           datalines(numlines,:) = [];
           gradients(1) = (datalines(1,4)-datalines(1,2))/(datalines(1,3)-datalines(1,1));

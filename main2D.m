@@ -3,7 +3,7 @@ function main2D()
     [bgDepths, bgIm] = getBackground;
     outputImages = cell(36);
 
-    for i = 1:36
+    for i = 16:16
         fprintf('%d\n', i);
         filename = ['bindermat/xyzrgb_frame_' sprintf('%04d', i) '.mat'];
     
@@ -48,14 +48,14 @@ function main2D()
            
         sortedBetter = sort(better(:), 'descend');
         threshold = sortedBetter(13000);
-        %planeBin = newGetLargest(myCleanup(better>threshold,0,2));%0.936,0,2));
+        %planeBin = newGetLargest(myCleanup(better>threshold,0,2));
         planeBin = newGetLargest(myCleanup(better>0.936,0,2));
-%        figure(i);
+%        figure(1);
 %        imshow(planeBin)
         countPixels = sum(sum(planeBin==1));
         counts = find(sum(planeBin)>0);
         if (countPixels > 8000) | ((countPixels > 5000) & (counts(end) < 600) & (counts(1) > 40))
-            planeBin = newGetLargest(myCleanup(better>threshold,0,2));
+%            planeBin = newGetLargest(myCleanup(better>threshold,0,2));
         else
             planeBin = zeros(480,640);
         end
@@ -71,8 +71,15 @@ function main2D()
 
         if (getArea(planeBin)>50)
             [r,c] = find(bwperim(planeBin,4)==1);
-            [sr,sc] = newRemoveSpurs(r,c,480,640,0);
+            figure(2);
+            imshow(setPixels([r,c]))
+%            [sr,sc] = newRemoveSpurs(r,c,480,640,0);
+            [sr,sc] = removespurs(r,c,480,640,0);
+            figure(3);
+            imshow(setPixels([sr,sc]))
             [tr,tc] = newBoundaryTrack(sr,sc,480,640,0);
+            figure(4);
+            imshow(setPixels([tr,tc]))
             attemptCount = 0;
             while length(tr) < 20 & length(r) > 100
                 attemptCount = attemptCount + 1;
@@ -86,7 +93,7 @@ function main2D()
                 [sr,sc] = newRemoveSpurs(r,c,480,640,0);
                 [tr,tc] = newBoundaryTrack(sr,sc,480,640,0);
 %                figure(attemptCount+2);
-%                imshow(setPixels([tr,tc]))
+                imshow(setPixels([tr,tc]))
             end
             [numlines, datalines] = newFindCorners(tr,tc,480,640,0,10);
             lengths = lineLengths(numlines, datalines);
@@ -107,7 +114,7 @@ function main2D()
 
     end
 
-    figure(1000);
+%    figure(1000);
 %    aviWriter(outputImages);
 
 % imwrite(planeBin,'~/Desktop/AV2/planeBin.jpg','jpg');
