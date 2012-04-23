@@ -1,3 +1,6 @@
+% Superimposes the image that has been subject to a projective
+% transfer onto another given image
+
 function outimage = overlay(xyzrgb, mappedIm)
 
     [a, b, c] = size(xyzrgb);

@@ -1,3 +1,5 @@
+% Converts a location in a 2D array to a number
+%
 function [point] = num2PosBin(num, bin, minY, maxX)
     
     dim = size(bin);

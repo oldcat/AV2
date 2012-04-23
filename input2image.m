@@ -1,3 +1,5 @@
+% Take input data and return depth data and rgb image
+%
 function [depths, image] = input2image(input)
 
     resizedIm = reshape(input, 640, 480, 6);

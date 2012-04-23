@@ -1,3 +1,6 @@
+% Converts a position number in a binary position to 
+% the actual position of that pixel
+%
 function [num] = pos2NumBin(pos, bin, minX)
 
     if pos(1) > 1

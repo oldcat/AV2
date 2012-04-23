@@ -1,0 +1,1495 @@
+\section{aviWriter.m}
+
+\begin{verbatim}
+
+% Takes a cell array of images and writes a video with the
+% images as frames.
+%
+function aviWriter(images);
+
+    vw = VideoWriter('AV_movie.avi');
+    vw.FrameRate = 6;
+    vw.open();
+
+    for i = 1 : 36
+      image = images{i};
+      imshow(image);
+      writeVideo(vw,getframe);
+    end
+    close(vw); 
+
+\end{verbatim}
+
+\section{checkFit.m}
+
+\begin{verbatim}
+
+% Checks how well a plane fits to the depth data of the pixels selected in the binary image
+% allowing for a given tolerance either side. quality of fit is the percentage of points
+% that fit the plane.
+%
+function quality = checkFit(planeParam, fullArea, bin, minX, maxX, minY, maxY, tolerance)
+    
+    totalPoints = sum(sum(bin));
+   
+    goodPoints = 0;
+    
+    % loop through relevant pixels only
+    for r = minY:maxY
+        for c = minX:maxX
+            if bin(r,c) == 1
+                dist = abs(getDistFromSurf(planeParam, fullArea(r,c,:)));
+                if dist <= tolerance
+                    goodPoints = goodPoints+1;
+                end
+            end
+        end
+    end
+    
+    quality = goodPoints/totalPoints;
+
+\end{verbatim}
+
+\section{esthomog.m}
+
+\begin{verbatim}
+
+% estimate homography matrix P from N matched points UV(N:2) -> XY(N:2)
+% Based on Hartley & Zisserman's description of the DLT algorithm
+function P=esthomog(UV,XY,N)
+
+  % set up A matrix for 0=Ap
+  A=zeros(2*N,9);
+  for i = 1 : N
+    A(2*i-1,:)=[0,0,0,-UV(i,1),-UV(i,2),-1,XY(i,2)*UV(i,1),XY(i,2)*UV(i,2),XY(i,2)]';
+    A(2*i,:)=[UV(i,1),UV(i,2),1,0,0,0,-XY(i,1)*UV(i,1),-XY(i,1)*UV(i,2),-XY(i,1)]';
+  end
+
+  % get eigenvector of smallest eigenvalue
+  [U,D,V]=svd(A);
+  p = V(:,9);
+  p = p / norm(p);      % normalise to unit length
+
+  % pack back into matrix
+  P=[[p(1),p(4),p(7)]',[p(2),p(5),p(8)]',[p(3),p(6),p(9)]'];
+
+\end{verbatim}
+
+\section{flatPartFinder.m}
+
+\begin{verbatim}
+
+function [fgCln, manInIm, finalIm] = flatPartFinder()
+
+    % get initial background image
+    [bgDepths, bgIm] = getBackground;
+    outputImages = cell(36);
+
+    % loop through the 36 frames
+    for i = 1:36
+        % read the data for the frame
+        fprintf('%d\n', i);
+        filename = ['bindermat/xyzrgb_frame_' sprintf('%04d', i) '.mat'];
+        [fgDepths, fgIm] = input2image(importdata(filename));
+
+
+        % get difference between current frame depth data and background
+        newDepth = abs(bgDepths(:,:,3) - fgDepths(:,:,3));
+        
+        % normalise this corrected depth data to be between 0 and 1
+        showable = newDepth-min(min(newDepth));
+        showable = showable/max(max(showable));
+
+        % threshold out background and artefacts cleaning up noise
+        fgBin = (showable>=0.03) & (showable<=0.45);
+        fgCln = myCleanup(fgBin,2,3);
+        
+        % get foreground depths, remove background and artefacts before normalising
+        better = fgDepths(:,:,3)-min(min(fgDepths(:,:,3)));
+        better = better/max(max(better));
+        better = better .* double(fgBin);
+        better = better/max(max(better));
+        
+        % initialise image of new background and man overlayed
+        manInIm = zeros(480, 640, 3);
+
+        % put in background
+        manInIm(:,:,1) = bgIm(:,:,1) .* double(~fgBin);
+        manInIm(:,:,2) = bgIm(:,:,2) .* double(~fgBin);
+        manInIm(:,:,3) = bgIm(:,:,3) .* double(~fgBin);
+        
+        % put in foreground, ie. man
+        manInIm(:,:,1) = manInIm(:,:,1) + (fgIm(:,:,1) .* double(fgBin));
+        manInIm(:,:,2) = manInIm(:,:,2) + (fgIm(:,:,2) .* double(fgBin));
+        manInIm(:,:,3) = manInIm(:,:,3) + (fgIm(:,:,3) .* double(fgBin));
+
+        % find the plane using flat part recognition
+        planeBin = newFindPlane3D(fgCln, fgDepths, 3, 50);
+
+        % if we have found a flat part find the rest of the folder
+        if sum(sum(planeBin)) > 0
+            planeBin = getFolder(fgDepths, planeBin, 0.02, 3, 0.001);
+        else
+            planeBin = planeBin;
+        end
+        
+        % write an output image
+        imwrite(planeBin, ['~/Desktop/AV2/Binaries3D/bin' sprintf('%02d',i) '.png'],'png')
+
+        finalIm  = manInIm;
+        finalBin = zeros(480,640,3);
+
+        % Apply boundary to binary image finding the rest of case and apply image to it
+        if (getArea(planeBin)>50)
+            [r,c] = find(bwperim(planeBin,4)==1);
+            [sr,sc] = newRemoveSpurs(r,c,480,640,0);
+            [tr,tc] = newBoundaryTrack(sr,sc,480,640,0);
+            attemptCount = 0;
+            while length(tr) < 20 & length(r) > 100
+                attemptCount = attemptCount + 1;
+                toRemove = zeros(1,length(tr));
+                for j = 1 : length(tr)
+                    toRemove(j) = find(r==tr(j) & c==tc(j));
+                end
+                r(toRemove) = [];
+                c(toRemove) = [];
+                [r,c] = newRemoveSpurs(r,c,480,640,0);
+                [sr,sc] = newRemoveSpurs(r,c,480,640,0);
+                [tr,tc] = newBoundaryTrack(sr,sc,480,640,0);
+            end
+            [numlines, datalines] = newFindCorners(tr,tc,480,640,0,10);
+            lengths = lineLengths(numlines, datalines);
+            corners = getAllCorners(lengths, numlines, datalines, 0);
+            finalIm = remapVideo(i, manInIm, corners, 0, 0);
+            finalBin = remapVideo(i, finalBin, corners, 0, 1);
+        end
+
+       imwrite(finalBin, ['~/Desktop/AV2/Binaries3D/newBin' sprintf('%02d',i) '.png'],'png')
+       imwrite(finalIm, ['~/Desktop/AV2/Binaries3D/finalIm' sprintf('%02d',i) '.png'],'png')
+
+       outputImages{i} = finalIm;
+        
+    end
+
+    figure(1000);
+    aviWriter(outputImages);
+
+
+\end{verbatim}
+
+\section{getAllCorners.m}
+
+\begin{verbatim}
+
+% This function takes the corners obtained from the corner finding algorithm,
+% takes the bottom corner and the longer of the 2 lines it is an endpoint of,
+% lets that be the bottom line of the quadrilateral, then calculates where
+% it expects the top 2 corners to be given knowlegde of the shape and
+% proportions of the quadrilateral, then orders the points appropriately
+
+function orderedCorners = getAllCorners(lengths, numlines, datalines, figN)
+
+    corners = zeros(4,2);
+
+    % First find the line that is the bottom of the box
+    lowestX = max(datalines(1:numlines,1));
+    line1 = find(datalines(1:numlines,1)==lowestX);
+    line1 = line1(1);
+    line2 = find(datalines(1:numlines,3)==lowestX);
+    line2 = line2(1);
+
+    if lengths(line1) > lengths(line2)
+        line = line1;
+    else
+        line = line2;
+    end
+
+    corners(1,1) = datalines(line,1);
+    corners(1,2) = datalines(line,2);
+    corners(2,1) = datalines(line,3);
+    corners(2,2) = datalines(line,4);
+
+    % Second work out where the top corners must be
+    length = lengths(line);
+    yDiff = corners(2,1) - corners(1,1);
+    xDiff = corners(2,2) - corners(1,2);
+
+    if xDiff > 0
+        sign = 1;
+    else
+        sign = -1;
+    end
+
+    ratio = 0.85;
+    corners(3,1) = corners(1,1) - abs(xDiff) * ratio;
+    corners(3,2) = corners(1,2) + yDiff * sign * ratio;
+    corners(4,1) = corners(2,1) - abs(xDiff) * ratio;
+    corners(4,2) = corners(2,2) + yDiff * sign * ratio;
+
+    orderedCorners = zeros(4,2);
+    if xDiff > 0
+        orderedCorners(1,:) = corners(3,:);
+        orderedCorners(2,:) = corners(4,:);
+        orderedCorners(3,:) = corners(2,:);
+        orderedCorners(4,:) = corners(1,:);
+    else
+        orderedCorners(1,:) = corners(4,:);
+        orderedCorners(2,:) = corners(3,:);
+        orderedCorners(3,:) = corners(1,:);
+        orderedCorners(4,:) = corners(2,:);
+    end
+
+    % Plot the corners if requested
+    if figN > 0
+        figure(figN)
+        clf
+        hold on
+        for i = 1 : 3
+            plot([orderedCorners(i,2), orderedCorners(i+1,2)],[orderedCorners(i,1), orderedCorners(i+1,1)],'*-')
+        end   
+        plot([orderedCorners(4,2), orderedCorners(1,2)],[orderedCorners(4,1), orderedCorners(1,1)],'*-')
+        axis([0,640,0,480])
+        axis ij
+    end
+
+
+
+
+\end{verbatim}
+
+\section{getArea.m}
+
+\begin{verbatim}
+
+% Get total pixels in foreground of binary im
+%
+function pixelCount = getArea(binaryIm)
+
+    [h,w] = size(binaryIm);
+    pixelCount = 0;
+    for x = 1:h
+        for y = 1:w
+            if binaryIm(x,y) == 1
+                pixelCount = pixelCount + 1;
+            end
+        end
+    end
+
+
+\end{verbatim}
+
+\section{getBackground.m}
+
+\begin{verbatim}
+
+% Returns the depths and image from the first frame as background
+%
+function [depths, outim] = getBackground()
+
+    input = importdata('bindermat/xyzrgb_frame_0001.mat');
+    [depths, image] = input2image(input);
+    outim = overlay(image, remapField);
+
+\end{verbatim}
+
+\section{getBounds.m}
+
+\begin{verbatim}
+
+% Takes a binary image and returns the bounds of the image contained within
+% 
+% Input parameters:
+%
+%   binIm - Binary image
+%
+% Output parameters:
+%
+%   minX, maxX - The first and last columns that contain any of the foreground
+%   minY, maxY - The first and last rows that contain any of the foreground
+%
+function [minX, maxX, minY, maxY] = getBounds(binIm)
+
+    dim = size(binIm);
+
+    minX = -1;
+    maxX = -1;
+
+    for c1 = 1:dim(2)
+        if (sum(binIm(:,c1)') > 0)
+            minX = c1;
+            break;
+        end
+    end
+    
+    if c1 <= dim(2)
+        for c2 = dim(2):-1:c1
+            if (sum(binIm(:,c2)') > 0)
+                maxX = c2;
+                break;
+            end
+        end
+    end
+    
+    minY = -1;
+    maxY = -1;
+    
+    for r1 = 1:dim(1)
+        if (sum(binIm(r1,:)) > 0)
+            minY = r1;
+            break;
+        end
+    end
+    
+    if r1 <= dim(1)
+        for r2 = dim(1):-1:r1
+            if (sum(binIm(r2,:)) > 0)
+                maxY = r2;
+                break;
+            end
+        end
+    end
+
+\end{verbatim}
+
+\section{getDistFromSurf.m}
+
+\begin{verbatim}
+
+% Calculates the distance of a point from a 3D plane given the surfaces parameters
+%
+function dist = getDistFromSurf(surfParam, point);
+
+    dist = abs(surfParam(1)*point(1) + surfParam(2)*point(2) + surfParam(3)*point(3) - surfParam(4));
+    dist = dist/sqrt(surfParam(1)^2 + surfParam(2)^2 + surfParam(3)^2);
+
+\end{verbatim}
+
+\section{getFit3Points.m}
+
+\begin{verbatim}
+
+% Takes three points and returns the coefficients of
+% a plane equation of the form found from the three
+% points.
+%       
+%       Ax + By + Cz = D
+%
+function [A, B, C, D] = getFit(p1, p2, p3)
+
+    % find two vectors in the plane
+    v12 = p2-p1;
+    v13 = p3-p1;
+    
+    % get cross product
+    cp = cross(v12, v13);
+    
+    A = cp(1);
+    B = cp(2);
+    C = cp(3);
+    D = cp(1)*p1(1) + cp(2)*p1(2) + cp(3)*p1(3);
+
+\end{verbatim}
+
+\section{getFit.m}
+
+\begin{verbatim}
+
+% Takes three points and returns the coefficients of
+% a plane equation of the form found from the three
+% points.
+%       
+%       Ax + By + Cz = D
+%
+function [A, B, C, D] = getFit(points, noise)
+
+    dimP = size(points);
+    numPoints = dimP(2);
+    
+    matX = [];
+    matY = [];
+    
+    for i = 1:numPoints
+        matX = [matX; points(1,i) points(2,i) 1];
+        matY = [matY; points(3,i)];        
+    end
+
+    weights = matX\matY;
+   
+    A = weights(1);
+    B = weights(2);
+    C = -1;
+    D = -weights(3);
+
+\end{verbatim}
+
+\section{getFolder.m}
+
+\begin{verbatim}
+
+% Given an initial flat part described by planeBin find other foreground points that
+% exist at depths within that plane. Cleanup output image to give just one area that should
+% describe the folder.
+%
+function folderBin = getFolder(fgDepths, planeBin, tolerance, numPoints, noise)
+    
+    qual = 0;
+
+    [minX, maxX, minY, maxY] = getBounds(planeBin); 
+    
+    bestQual = 0;
+    bestParam = [0,0,0,0];
+
+    desired = 0.99;
+    
+    for i = 1:300
+        [qual param] = getBestFit(fgDepths,planeBin,minX,maxX,minY,maxY,tolerance,numPoints,noise);      
+
+        if qual > desired
+            bestParam = param;
+            break
+        elseif qual > bestQual
+            bestQual=qual;
+            bestparam=param;
+        end
+
+        if i == 50
+            desired = 0.95;
+        elseif i == 150
+            desired = 0.9;
+        end
+        if qual > desired
+            break
+        end        
+    end
+    
+    
+    folderBin = myCleanup(newGetLargest(pointsInPlane(bestParam, fgDepths, tolerance)),3,2);
+
+\end{verbatim}
+
+\section{getRanPointsNumber.m}
+
+\begin{verbatim}
+
+% get a number of random point references from a total number of points
+%
+function [points] = getRanPointsNumber(totalPoints, numPointsToReturn)
+    
+    if(numPointsToReturn > totalPoints || numPointsToReturn <= 0)
+        error('ERROR: number of points must be between 0 and the total points')
+    end
+    
+    N = numPointsToReturn;
+
+    points = [ceil(rand*totalPoints)];
+    
+    for i = 2:N
+        i;
+        point = ceil(rand*(totalPoints-i+1));
+        
+        for j = 1:(i-1)
+            if (point < points(j));
+                break
+            else
+                point = point + 1;
+                if j == i-1
+                    j = j+1;
+                end
+            end
+        end
+        points = [points(1:j-1) point points(j:end)];
+    end
+
+\end{verbatim}
+
+\section{hardThreshold.m}
+
+\begin{verbatim}
+
+% This function runs our hard thresholding code to find the black quadrelateral while
+% overlaying the man on the new background
+%
+function hardThreshold()
+
+    % get initial background image
+    [bgDepths, bgIm] = getBackground;
+    outputImages = cell(36);
+
+    % loop through the 36 frames
+    for i = 1:36
+        % read the data for the frame
+        fprintf('%d\n', i);
+        filename = ['bindermat/xyzrgb_frame_' sprintf('%04d', i) '.mat'];
+        [fgDepths, fgIm] = input2image(importdata(filename));
+
+
+        % get difference between current frame depth data and background
+        newDepth = abs(bgDepths(:,:,3) - fgDepths(:,:,3));
+        
+        % normalise this corrected depth data to be between 0 and 1
+        showable = newDepth-min(min(newDepth));
+        showable = showable/max(max(showable));
+
+        % threshold out background and artefacts cleaning up noise
+        fgBin = (showable>=0.03) & (showable<=0.45);
+        fgCln = myCleanup(fgBin,2,3);
+        
+        % get foreground depths, remove background and artefacts before normalising
+        better = fgDepths(:,:,3)-min(min(fgDepths(:,:,3)));
+        better = better/max(max(better));
+        better = better .* double(fgBin);
+        better = better/max(max(better));
+        
+        % initialise image of new background and man overlayed
+        manInIm = zeros(480, 640, 3);
+
+        % put in background
+        manInIm(:,:,1) = bgIm(:,:,1) .* double(~fgBin);
+        manInIm(:,:,2) = bgIm(:,:,2) .* double(~fgBin);
+        manInIm(:,:,3) = bgIm(:,:,3) .* double(~fgBin);
+        
+        % put in foreground, ie. man
+        manInIm(:,:,1) = manInIm(:,:,1) + (fgIm(:,:,1) .* double(fgBin));
+        manInIm(:,:,2) = manInIm(:,:,2) + (fgIm(:,:,2) .* double(fgBin));
+        manInIm(:,:,3) = manInIm(:,:,3) + (fgIm(:,:,3) .* double(fgBin));
+
+        % get closest pixels above threshold, ie. the quadrelateral
+        planeBin = newGetLargest(myCleanup(better>0.936,0,2));
+
+        % if we have the full case get closest 13000 pixels and make them the binary, otherwise make it black
+        countPixels = sum(sum(planeBin==1));
+        counts = find(sum(planeBin)>0);
+        if (countPixels > 8000) | ((countPixels > 5000) & (counts(end) < 600) & (counts(1) > 40))
+            sortedBetter = sort(better(:), 'descend');
+            threshold = sortedBetter(13000);
+            planeBin = newGetLargest(myCleanup(better>threshold,0,2));
+        else
+            planeBin = zeros(480,640);
+        end
+        
+        
+        finalIm = manInIm;
+
+        % Apply boundary to binary image finding the rest of case and apply image to it
+        if (getArea(planeBin)>50)
+            [r,c] = find(bwperim(planeBin,4)==1);
+            [sr,sc] = newRemoveSpurs(r,c,480,640,0);
+            [tr,tc] = newBoundaryTrack(sr,sc,480,640,0);
+            attemptCount = 0;
+            while length(tr) < 20 & length(r) > 100
+                attemptCount = attemptCount + 1;
+                toRemove = zeros(1,length(tr));
+                for j = 1 : length(tr)
+                    toRemove(j) = find(r==tr(j) & c==tc(j));
+                end
+                r(toRemove) = [];
+                c(toRemove) = [];
+                [r,c] = newRemoveSpurs(r,c,480,640,0);
+                [sr,sc] = newRemoveSpurs(r,c,480,640,0);
+                [tr,tc] = newBoundaryTrack(sr,sc,480,640,0);
+            end
+            [numlines, datalines] = newFindCorners(tr,tc,480,640,0,10);
+            lengths = lineLengths(numlines, datalines);
+            corners = getAllCorners(lengths, numlines, datalines, 0);
+            finalIm = remapVideo(i, manInIm, corners, 0);
+        end
+
+        % store new image in cell array
+        outputImages{i} = finalIm;
+        
+    end
+
+    % write video
+    figure(1000);
+    aviWriter(outputImages);
+
+
+\end{verbatim}
+
+\section{input2image.m}
+
+\begin{verbatim}
+
+% Take input data and return depth data and rgb image
+%
+function [depths, image] = input2image(input)
+
+    resizedIm = reshape(input, 640, 480, 6);
+    rotatedIm = imrotate(resizedIm, 90);
+    image = flipdim(rotatedIm, 1);
+    
+    depths = image(:,:,1:3);
+    image  = image(:,:,4:6)/255;
+
+
+
+\end{verbatim}
+
+\section{lineLengths.m}
+
+\begin{verbatim}
+
+% Calculates the length of each line in datalines
+
+function lengths = lineLengths(numlines, datalines)
+
+    lengths = zeros(numlines,1);
+    for i = 1 : numlines
+        if datalines(i,1) ~= 0 | datalines(i,2) ~= 0 | datalines(i,3) ~= 0 | datalines(i,4) ~= 0
+            x1 = datalines(i,1);
+            y1 = datalines(i,2);
+            x2 = datalines(i,3);
+            y2 = datalines(i,4);
+            lengths(i) = sqrt((x2-x1).^2 + (y2-y1).^2);
+        end
+    end
+            
+
+
+
+
+\end{verbatim}
+
+\section{myCleanup.m}
+
+\begin{verbatim}
+
+% does a variety of morphological operations to clean up
+% thresholded image. Erodes ERO times to remove dangling pixels.
+% Dilates ERO to reverse and then DIL more to fill internal holes.
+% Erodes DIL to restore size.
+function BW2 = myCleanup(binimage,ERO,DIL)
+
+     SE = ones(3,3);        % structuring element
+     BW2 = binimage;
+     for i = 1 : ERO
+       BW1 = BW2;
+       BW2 = myimerode(BW1,SE);       % remove spurs
+     end
+     for i = 1 : DIL+ERO
+       BW1 = BW2;
+       BW2 = myimdilate(BW1,SE);      % restore and fill internal holes
+     end
+     for i = 1 : DIL
+       BW1 = BW2;
+       BW2 = myimerode(BW1,SE);       % restore size
+     end
+
+\end{verbatim}
+
+\section{myimdilate.m}
+
+\begin{verbatim}
+
+%% Copyright (C) 2004 Josep Mones i Teixidor
+%%
+%% This program is free software; you can redistribute it and/or modify
+%% it under the terms of the GNU General Public License as published by
+%% the Free Software Foundation; either version 2 of the License, or
+%% (at your option) any later version.
+%%
+%% This program is distributed in the hope that it will be useful,
+%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%% GNU General Public License for more details.
+%%
+%% You should have received a copy of the GNU General Public License
+%% along with this program; if not, write to the Free Software
+%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+%% Perform a dilation morphological operation on a binary image.
+%%
+%% BW2 = dilate(BW1, SE) returns a binary image with the result of a dilation
+%% operation on BW1 using neighbour mask SE.
+%%
+%% For each point in BW1, dilate search its neighbours (which are
+%% defined by setting to 1 their in SE). If any of its neighbours
+%% is on (1), then pixel is set to 1. If all are off (0) then it is set to 0.
+%%
+%% Center of SE is calculated using floor((size(SE)+1)/2).
+%%
+%% Pixels outside the image are considered to be 0.
+%%
+%% BW2 = dilate(BW1, SE, alg) returns the result of a dilation operation 
+%% using algorithm alg. Only 'spatial' is implemented at the moment.
+%%
+%% BW2 = dilate(BW1, SE, ..., n) returns the result of n dilation
+%% operations on BW1.
+%%
+
+%% Author:  Josep Mones i Teixidor <jmones@puntbarra.com>
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Matlab Port - T. Breckon 22/11/04
+
+%% Notes for IVR course - define SE as an NxM matrix and not a
+%% strel object (as strel belongs to the image proc. toolkit)
+
+%% i.e. use:
+
+%%  SE = ones(3,3);
+%%  DilatedImage = myimdilate(BinaryImageInput,SE);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function BW2 = myimdilate(BW1, SE, a, b)
+  alg='spatial';
+  n=1;
+  %%if (nargin < 1 || nargin > 4)
+    %% usage ("BW2 = dilate(BW1, SE [, alg] [, n])");
+  %%end
+  if nargin ==  4
+    alg=a;
+    n=b;
+  elseif nargin == 3
+    if isstr(a)
+      alg=a;
+    else
+      n=a;
+    end
+  end
+
+  %%if ~strcmp(alg, 'spatial')
+  %%  error("dilate: alg not implemented.");
+  %%end
+
+  %% "Binarize" BW1, just in case image is not [1,0]
+  BW1=BW1~=0;
+
+  for i=1:n
+    %% create result matrix
+    BW1=filter2(SE,BW1)>0;
+   end
+
+  BW2=BW1;
+
+%!demo
+%! dilate(eye(5),ones(2,2))
+%! % returns a thick diagonal.
+
+
+
+%!assert(dilate(eye(3),[1])==eye(3));	# using [1] as a mask returns the same value
+%!assert(dilate(eye(3),[1,0,0])==[[0;0],eye(2);0,0,0]);
+%!assert(dilate(eye(3),[1,0,0,0])==[[0;0],eye(2);0,0,0]); # test if center is correctly calculated on even masks
+
+\end{verbatim}
+
+\section{myimerode.m}
+
+\begin{verbatim}
+
+%% Copyright (C) 2004 Josep Mones i Teixidor
+%%
+%% This program is free software; you can redistribute it and/or modify
+%% it under the terms of the GNU General Public License as published by
+%% the Free Software Foundation; either version 2 of the License, or
+%% (at your option) any later version.
+%%
+%% This program is distributed in the hope that it will be useful,
+%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%% GNU General Public License for more details.
+%%
+%% You should have received a copy of the GNU General Public License
+%% along with this program; if not, write to the Free Software
+%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+%% Perform an erosion morphological operation on a binary image.
+%%
+%% BW2 = erosion(BW1, SE) returns a binary image with the result of an erosion
+%% operation on BW1 using neighbour mask SE.
+%%
+%% For each point in BW1, erode searchs its neighbours (which are
+%% defined by setting to 1 their in SE). If all neighbours
+%% are on (1), then pixel is set to 1. If any is off (0) then it is set to 0.
+%%
+%% Center of SE is calculated using floor((size(SE)+1)/2).
+%%
+%% Pixels outside the image are considered to be 0.
+%%
+%% BW2 = erode(BW1, SE, alg) returns the result of a erosion operation 
+%% using algorithm alg. Only 'spatial' is implemented at the moment.
+%%
+%% BW2 = erosion(BW1, SE, ..., n) returns the result of n erosion
+%% operations on BW1.
+%%
+
+%% Author:  Josep Mones i Teixidor <jmones@puntbarra.com>
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Matlab Port - T. Breckon 22/11/04
+
+%% Notes for IVR course - define SE as an NxM matrix and not a
+%% strel object (as strel belongs to the image proc. toolkit)
+
+%% i.e. use:
+
+%%  SE = ones(3,3);
+%%  ErrodedImage = myimerode(BinaryImageInput,SE);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function BW2 = myimerode(BW1, SE, a, b)
+  alg='spatial';
+  n=1;
+  if (nargin < 1 || nargin > 4)
+    %% usage ("BW2 = erode(BW1, SE [, alg] [, n])");
+  end
+  if nargin ==  4
+    alg=a;
+    n=b;
+  elseif nargin == 3
+    if isstr(a)
+      alg=a;
+    else
+      n=a;
+    end
+  end 
+
+  %% if ~strcmp(alg, 'spatial')
+    %% error("erode: alg not implemented.");
+  %% end
+
+ %% count ones in mask
+  thr=sum(SE(:));
+
+ %% "Binarize" BW1, just in case image is not [1,0]
+  BW1=BW1~=0;
+
+  for i=1:n
+    %% create result matrix
+    BW1=filter2(SE,BW1) == thr;
+  end
+
+  BW2=BW1;
+
+%!demo
+%! erode(ones(5,5),ones(3,3))
+%! % creates a zeros border around ones.
+%!assert(erode([0,1,0;1,1,1;0,1,0],[0,0,0;0,0,1;0,1,1])==[1,0,0;0,0,0;0,0,0]);
+%!assert(erode([0,1,0;1,1,1;0,1,0],[0,1;1,1])==[1,0,0;0,0,0;0,0,0]);
+
+\end{verbatim}
+
+\section{newBoundaryTrack.m}
+
+\begin{verbatim}
+
+% Modification of boundarytrack.m from the AV website
+% Difference to original boundarytrack is that this cuts off pixels
+% that are not in the loop (assuming the boundary will at some point
+% reach a pixel somewhere in the 3x3 grid around a previous pixel)
+
+function [tr,tc] = myBoundaryTrack(r,c,H,W,figN)
+
+  % next direction offsets
+  % 1 2 3
+  % 8 x 4
+  % 7 6 5
+  mr = [-1,-1,-1,0,1,1,1,0];
+  mc = [-1,0,1,1,1,0,-1,-1];
+  
+  % set up visited array (keep track of where we have already tracked)
+  
+  n = length(r);
+  visited=zeros(H,W);
+  for i = 1 : n
+    visited(r(i),c(i)) = 1;
+  end
+
+  allPoints = visited;
+
+  % set up tracked output
+  
+  tmpr = zeros(n,1);
+  tmpc = zeros(n,1);
+  count = 1;
+  tmpr(1) = r(1);
+  tmpc(1) = c(1);
+  visited(tmpr(count),tmpc(count)) = 0;
+
+
+  % find first connected point clockwise
+  
+  lastdir = 1;  % arbitrary start
+  notdone = 1;
+
+  finalr = 0;
+  finalc = 0;
+
+  while notdone
+    
+    % find next untracked point
+    
+    notdone = 0;
+    for i = 1 : 8                       % try all 8 directions
+      nextdir = lastdir + 4 + i;        % get next direction to try
+      while nextdir > 8
+        nextdir = nextdir - 8;
+      end
+
+      % see if nextdir is a boundary point
+      nr = tmpr(count)+mr(nextdir);
+      nc = tmpc(count)+mc(nextdir);
+
+      if visited(nr,nc) == 1
+        % it is a boundary point, so track to it
+        lastdir = nextdir;
+        notdone = 1;
+        count = count + 1;
+        tmpr(count) = nr;
+        tmpc(count) = nc;
+        visited(nr,nc) = 0;
+        break
+      elseif allPoints(nr,nc) == 1 & ~(nr==tmpr(count-1) & nc==tmpc(count-1))
+      % If this is a point in the boundary that has been visited and wasn't visited previously
+        finalr = nr;
+        finalc = nc;
+      end
+    end
+  end
+  tr = tmpr(1:count);
+  tc = tmpc(1:count);
+
+  startInd = find(tr==finalr & tc==finalc);
+  tr = tr(startInd:count);
+  tc = tc(startInd:count);
+
+% display result - ?
+  
+if figN > 0
+  figure(figN)
+  plot(tc,tr)
+  axis([0,W,0,H])
+  axis ij
+end
+
+      
+
+\end{verbatim}
+
+\section{newFindCorners.m}
+
+\begin{verbatim}
+
+% Modification of findcorners.m from AV website
+% The difference here is that numlines and datalines are
+% parameters instead of global variables and this then
+% joins 2 lines together if they have a common endpoint
+% and are deemed to have a similar gradient
+
+function [numlines, datalines] = newFindCorners(r,c,H,W,figN,threshold)
+
+  numlines = 0;
+  datalines = zeros(100,4);
+
+  % assumes (r,c) are lists of consecutive boundary points
+  as = find(c==min(c));         % left start point
+  inda = as(1);                 % index
+  bs = find(c==max(c));         % right start point
+  indb = bs(1);                 % index
+  sta = min(inda,indb);         % sort into order
+  stb = max(inda,indb);
+
+  % split into two initial sets
+  n = length(c);
+  setar = r(sta:stb);           % set a
+  setac = c(sta:stb);
+  blen = n - (stb-sta) + 1;     % set b
+  setbr=zeros(blen,1);
+  setbc=zeros(blen,1);
+  setbr(1:n-stb+1) = r(stb:n);
+  setbc(1:n-stb+1) = c(stb:n);
+  setbr(n-stb+2:blen) = r(1:sta);
+  setbc(n-stb+2:blen) = c(1:sta);
+
+  % recursive split on each of the two sets
+  [numlines, datalines] = newRecSplit(setar,setac,threshold, numlines, datalines);
+  [numlines, datalines] = newRecSplit(setbr,setbc,threshold, numlines, datalines);
+
+  % get gradients
+  gradients = zeros(numlines,1);
+  for i = 1 : numlines
+    x1 = datalines(i,1);
+    y1 = datalines(i,2);
+    x2 = datalines(i,3);
+    y2 = datalines(i,4);
+    gradients(i) = (y2-y1)/(x2-x1);
+  end
+
+  % smooth results by merging lines with a common point and similar gradient
+  notdone = true;
+  while (notdone)
+    notdone = false;
+    for i = 1 : numlines-1
+      comparison = gradients(i)/gradients(i+1);
+      if comparison < 4 & comparison > 0.25
+          datalines(i,3:4) = datalines(i+1,3:4);
+          datalines(i+1,:) = [];
+          gradients(i) = (datalines(i,4)-datalines(i,2))/(datalines(i,3)-datalines(i,1));
+          gradients(i+1) = [];
+          numlines = numlines-1;
+          notdone = true;
+          break;
+      end
+    end
+    if datalines(numlines,3)==datalines(1,1) & datalines(numlines,4)==datalines(1,2)
+      comparison = gradients(numlines)/gradients(1);
+      if comparison < 4 & comparison > 0.25
+          datalines(1,1:2) = datalines(numlines,1:2);
+          datalines(numlines,:) = [];
+          gradients(1) = (datalines(1,4)-datalines(1,2))/(datalines(1,3)-datalines(1,1));
+          gradients(numlines) = [];
+          numlines = numlines-1;
+          notdone = true;
+          break;
+      end
+    end
+  end
+
+  if figN > 0
+    figure(figN)
+    clf
+    hold on
+    for i = 1 : numlines
+      plot([datalines(i,2),datalines(i,4)],[datalines(i,1),datalines(i,3)],'*-')
+    end   
+    axis([0,W,0,H])
+    axis ij
+  end
+
+\end{verbatim}
+
+\section{newFindPlane3D.m}
+
+\begin{verbatim}
+
+% Loops throu images looking for flat parts. Returns binary image containing all
+% flat parts found.
+%
+function [planeBin] = newFindPlane3D(fgBin, depthPts, numPoints, searchDim)
+    
+    if nargin < 3
+        numPoints = 3;
+    end
+    
+    if nargin < 4
+        searchDim = 50;
+    end    
+
+    fitTolerance = 0.02;
+    noise = 0.001;
+
+    dim = size(fgBin);
+    
+    % get boundaries of binary image
+    [minX maxX, minY, maxY] = getBounds(fgBin);
+    
+    planeBin = zeros(dim);
+    
+    % search for flat parts
+    if (minX > 0)
+        for r = 250:(searchDim/2):(maxY-searchDim)
+            for c = minX:(searchDim/2):(maxX-searchDim)
+                if fgBin(r:(r+searchDim-1),c:(c+searchDim-1)) == ones(searchDim)
+                    tmpBin = zeros(dim(1),dim(2));
+                    tmpBin(r:(r+searchDim-1),c:(c+searchDim-1)) = tmpBin(r:(r+searchDim-1),c:(c+searchDim-1)) + 1;
+                    qual = getBestFit(depthPts,tmpBin,minX,maxX,minY,maxY,fitTolerance,numPoints,noise);
+                    % qual = getBestFit(depthPts(r:(r+searchDim-1),c:(c+searchDim-1),:),0.1,numPoints,noise) 
+                    % if flat then add to output image
+                    if qual > 0.95
+                        planeBin(r:(r+searchDim-1),c:(c+searchDim-1)) = ones(searchDim);
+                    end                        
+                end
+            end
+        end
+    end
+    
+    
+
+\end{verbatim}
+
+\section{newGetLargest.m}
+
+\begin{verbatim}
+
+% Slight modification of getlargest.m
+% Allows for just 1 input argument
+
+function largest = newGetLargest(input,show)
+
+     if nargin == 1
+        show = 0;
+     end
+
+     [label,num] = bwlabel(input,4);    % 4 connectivity labeling of regions
+     if num==1                          % if only 1 region
+         largest = input;
+         return
+     end
+
+     % find biggest
+     regiondata = regionprops(label,'Area');    % get region areas
+     maxarea = max([regiondata.Area]);          % get largest area
+     Ind = find([regiondata.Area]==maxarea);    % get its index
+
+     % make output image - select the pixels with the desired index
+     largest = ismember(label,Ind);
+
+     if show > 0
+        figure(show)
+        colormap(gray)
+        imshow(largest)
+     end
+
+\end{verbatim}
+
+\section{newRecSplit.m}
+
+\begin{verbatim}
+
+% Modification of recsplit.m from AV website
+% Difference is simply numlines and datalines passed as arguments instead of
+% global variables
+
+function [numlines, datalines] = recsplit(r,c,threshold, numlines, datalines)
+
+  n = length(r);
+  vec = [c(n)-c(1), r(1)-r(n)];  % perpendicular vector
+  vec = vec/norm(vec);
+
+  % find point furthest from line
+  maxdist = 0;
+  for i = 1 : n
+    dist = abs( [r(i) - r(1), c(i) - c(1)] * vec' );
+    if dist > maxdist
+      maxdist = dist;
+      maxindex = i;           % where furthest
+    end
+  end
+
+  % check for splitting
+  if maxdist < threshold
+    % then it's a single line - save it
+    numlines = numlines + 1;
+    datalines(numlines,1) = r(1);
+    datalines(numlines,2) = c(1);
+    datalines(numlines,3) = r(n);
+    datalines(numlines,4) = c(n);
+  else
+%split=[maxindex, r(maxindex), r(1), c(maxindex), c(1), maxdist]
+%vec
+    % otherwise it needs to be split up
+    [numlines, datalines] = newRecSplit(r(1:maxindex),c(1:maxindex),threshold,numlines,datalines);
+    [numlines, datalines] = newRecSplit(r(maxindex:n),c(maxindex:n),threshold,numlines,datalines);
+  end
+
+\end{verbatim}
+
+\section{newRemoveSpurs.m}
+
+\begin{verbatim}
+
+% Modification of removespurs.m from the AV website
+% The difference here is extra conditions for removing
+% pixels as the function was removing pixels it should
+% not have been.
+
+function [sr,sc] = newRemoveSpurs(r,c,H,W,figN)
+
+  % recreate HxW data array with 1's at boundary positions
+
+  work=zeros(H,W);
+  N = length(r);
+  for i = 1 : N
+    work(r(i),c(i))=1;
+  end
+
+  % remove unecessary pixels (as discussed in lectures)
+  
+  for r = 3 : H-2
+  for c = 3 : W-2
+    if work(r,c)==1 & work(r+1,c+1)==1
+      if work(r+1,c)==1 & (work(r+1,c-1)==0 & work(r+2,c-1)==0 & work(r+2,c)==0)
+        work(r+1,c)=0;
+      end
+      if work(r,c+1)==1 & (work(r-1,c+1)==0 & work(r-1,c+2)==0 & work(r,c+2)==0)
+        work(r,c+1)=0;
+      end
+    end
+    if work(r,c)==1 & work(r+1,c-1)==1
+      if work(r+1,c)==1 & (work(r+1,c+1)==0 & work(r+2,c+1)==0 & work(r+2,c)==0)
+        work(r+1,c)=0;
+      end
+      if work(r,c-1)==1 & (work(r-1,c-1)==0 & work(r-1,c-2)==0 & work(r,c-2)==0)
+        work(r,c-1)=0;
+      end
+    end
+  end
+  end
+
+  % check for other dangling spurs (as discussed in lectures)
+  
+  changed=1;
+  while changed==1
+    changed = 0;
+    [sr,sc] = find(work==1);
+    for i = 1 : length(sr)      % check each boundary point
+      neigh = work(sr(i)-1:sr(i)+1,sc(i)-1:sc(i)+1);
+      count=sum(sum(neigh));
+      if count < 3              % only point and at most 1 neighbor
+        work(sr(i),sc(i)) = 0;  % so remove it
+        changed=1;
+      end
+    end
+  end
+
+% display result - ?
+  
+if figN > 0
+  figure(figN)
+  clf
+  plot(sc,sr,'.')
+  axis ij
+  axis([0,W,0,H])
+end
+
+       
+
+\end{verbatim}
+
+\section{num2point.m}
+
+\begin{verbatim}
+
+% Converts a number to a location in a 2D array
+%
+function point = num2point(number, dim)
+    
+    point = zeros(1,2);
+    
+    point(2) = ceil(number/dim(1));
+    point(1) = number - dim(1)*(point(2)-1);
+    
+    if point(2) > dim(2)
+        error('ERROR: Number given was outwith given dimensions')
+    end
+
+
+\end{verbatim}
+
+\section{num2PosBin.m}
+
+\begin{verbatim}
+
+% Converts a location in a 2D array to a number
+%
+function [point] = num2PosBin(num, bin, minY, maxX)
+    
+    dim = size(bin);
+    
+    point = zeros(2,1);
+    
+    
+    totalPoints = 0;
+    oddThing = sum(sum(bin(minY:end,:)));
+    for r = minY:dim(1)
+        totalPoints = totalPoints + sum(bin(r,:));
+        newTot = totalPoints;
+        if num <= totalPoints
+            for c = maxX:-1:1
+                if num == newTot
+                    point = [r,c];
+                    break
+                end
+                if bin(r,c) == 1
+                    newTot = newTot-1;
+                end
+            end
+        end
+        if point(1) > 0
+            break
+        end
+    end
+
+\end{verbatim}
+
+\section{point2num.m}
+
+\begin{verbatim}
+
+% Converts a location in a 2D array to a number
+%
+function number = point2num(point, dim)
+
+    if (point(1) > dim(1)) | (point(2) > dim(2))
+        error('ERROR: Given point outside of given dimensions')
+    end
+
+    number = (point(2)-1)*dim(1) + point(1);
+
+\end{verbatim}
+
+\section{pointsInPlane.m}
+
+\begin{verbatim}
+
+% returns a binary image showing all depth points in a plane given a small tolerance
+%
+function [bin] = pointsInPlane(surfParam, depthPts, tolerance)
+
+    dim = size(depthPts);
+    
+    bin = zeros(dim(1),dim(2));
+    
+    for r = 1:dim(1)
+        for c = 1:dim(2)
+            dist = abs(getDistFromSurf(surfParam, depthPts(r,c,:)));
+            if dist <= tolerance
+                bin(r,c) = 1;
+            end
+        end
+    end
+
+\end{verbatim}
+
+\section{pos2NumBin.m}
+
+\begin{verbatim}
+
+% Converts a position number in a binary position to 
+% the actual position of that pixel
+%
+function [num] = pos2NumBin(pos, bin, minX)
+
+    if pos(1) > 1
+        num = sum(sum(bin(1:(pos(1)-1),:)));
+    end
+    
+    for c = minX:pos(2)
+        if bin(pos(1),pos(2)) == 1
+            num = num+1;
+        end
+    end
+
+\end{verbatim}
+
+\section{remapField.m}
+
+\begin{verbatim}
+
+% Loads the field image and remaps it, using a homographic 
+% transfer, to the necessary coordinates for it to be 
+% subsequently overlaid onto another image
+
+function outimage = remapField()
+    field = importdata('field.jpg', 'jpg');
+    [h,w,c] = size(field);
+
+    UV=zeros(4,2);
+    XY=zeros(4,2);
+    UV=[[41, 129]',[40, 429]',[474, 453]',[476, 89]']';
+    XY=[[1,1]',[1,w]',[h,w]',[h,1]']';
+
+    P=esthomog(UV,XY,4);
+
+    outimage=zeros(480,640,3);
+    v=zeros(3,1);
+
+    for r = 1 : 480
+        for c = 1 : 640
+            v=P*[r,c,1]';
+            y=round(v(1)/v(3));
+            x=round(v(2)/v(3));
+            if (x >= 1) & (x <= w) & (y >= 1) & (y <= h)
+                outimage(r,c,:)=field(y,x,:);
+            end
+        end
+    end
+
+    outimage = outimage/255;
+
+\end{verbatim}
+
+\section{remapVideo.m}
+
+\begin{verbatim}
+
+% Loads an image from the sequence of input images and
+% given the image to transfer it to, and the corners of
+% the quadrilateral, maps the loaded image onto the
+% quadrilateral and returns it
+
+function outimage = remapVideo(i, image, corners, figN, binaries)
+
+    if nargin < 5
+        binaries = 0
+    end
+
+    if binaries == 0
+        filename = ['~/Desktop/AV2/dramchip/' sprintf('%d',i) '.jpg'];
+        inImage = importdata(filename, 'jpg');
+        topImage = single(inImage)/255;
+        [h,w,c] = size(topImage);
+    else
+        topImage = ones(480,640,3);
+        [h,w,c] = size(topImage);
+    end
+
+    UV=zeros(4,2);
+    XY=zeros(4,2);
+    UV=[[corners(1,1), corners(1,2)]',[corners(2,1), corners(2,2)]',[corners(3,1), corners(3,2)]',[corners(4,1), corners(4,2)]']';    % target points
+    XY=[[1,1]',[1,w]',[h,w]',[h,1]']';    % source points
+
+    P=esthomog(UV,XY,4);
+
+    mappedIm=zeros(480,640,3);
+    v=zeros(3,1);
+
+    for r = 1 : 480
+        for c = 1 : 640
+            v=P*[r,c,1]';
+            y=round(v(1)/v(3));
+            x=round(v(2)/v(3));
+            if (x >= 1) & (x <= w) & (y >= 1) & (y <= h)
+                mappedIm(r,c,:)=topImage(y,x,:);
+            end
+        end
+    end
+
+    outimage = overlay(image, mappedIm);
+
+    if figN > 0
+        figure(figN)
+        imshow(outimage)
+    end
+
+\end{verbatim}
+
+\section{surf2points.m}
+
+\begin{verbatim}
+
+% Converts a surface to a list of points
+%
+function points = surf2points(surf)
+
+    dim = size(surf);
+    
+    points = zeros(dim(3),dim(1)*dim(2));
+    
+    count = 1;
+    for i = 1:dim(1)
+        for j = 1:dim(2)
+            for k = 1:dim(3)
+                points(k,count) = surf(i,j,k);
+            end
+            count = count+1;
+        end
+    end
+
+\end{verbatim}
+

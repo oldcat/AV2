@@ -1,3 +1,5 @@
+% Converts a surface to a list of points
+%
 function points = surf2points(surf)
 
     dim = size(surf);

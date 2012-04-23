@@ -18,8 +18,7 @@ function [A, B, C, D] = getFit(points, noise)
     end
 
     weights = matX\matY;
-%    weights = (inv((matX'*matX)+(noise*eye(3)))*matX')*matY; %+(noise*eye(dimX(2)));
-    
+   
     A = weights(1);
     B = weights(2);
     C = -1;

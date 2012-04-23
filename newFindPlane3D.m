@@ -1,6 +1,7 @@
+% Loops throu images looking for flat parts. Returns binary image containing all
+% flat parts found.
+%
 function [planeBin] = newFindPlane3D(fgBin, depthPts, numPoints, searchDim)
-
-
     
     if nargin < 3
         numPoints = 3;
@@ -15,10 +16,12 @@ function [planeBin] = newFindPlane3D(fgBin, depthPts, numPoints, searchDim)
 
     dim = size(fgBin);
     
+    % get boundaries of binary image
     [minX maxX, minY, maxY] = getBounds(fgBin);
     
     planeBin = zeros(dim);
     
+    % search for flat parts
     if (minX > 0)
         for r = 250:(searchDim/2):(maxY-searchDim)
             for c = minX:(searchDim/2):(maxX-searchDim)
@@ -27,6 +30,7 @@ function [planeBin] = newFindPlane3D(fgBin, depthPts, numPoints, searchDim)
                     tmpBin(r:(r+searchDim-1),c:(c+searchDim-1)) = tmpBin(r:(r+searchDim-1),c:(c+searchDim-1)) + 1;
                     qual = getBestFit(depthPts,tmpBin,minX,maxX,minY,maxY,fitTolerance,numPoints,noise);
                     % qual = getBestFit(depthPts(r:(r+searchDim-1),c:(c+searchDim-1),:),0.1,numPoints,noise) 
+                    % if flat then add to output image
                     if qual > 0.95
                         planeBin(r:(r+searchDim-1),c:(c+searchDim-1)) = ones(searchDim);
                     end                        

@@ -1,3 +1,7 @@
+% Given an initial flat part described by planeBin find other foreground points that
+% exist at depths within that plane. Cleanup output image to give just one area that should
+% describe the folder.
+%
 function folderBin = getFolder(fgDepths, planeBin, tolerance, numPoints, noise)
     
     qual = 0;

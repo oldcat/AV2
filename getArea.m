@@ -1,3 +1,5 @@
+% Get total pixels in foreground of binary im
+%
 function pixelCount = getArea(binaryIm)
 
     [h,w] = size(binaryIm);

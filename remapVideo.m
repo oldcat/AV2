@@ -1,3 +1,8 @@
+% Loads an image from the sequence of input images and
+% given the image to transfer it to, and the corners of
+% the quadrilateral, maps the loaded image onto the
+% quadrilateral and returns it
+
 function outimage = remapVideo(i, image, corners, figN, binaries)
 
     if nargin < 5

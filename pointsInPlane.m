@@ -1,3 +1,5 @@
+% returns a binary image showing all depth points in a plane given a small tolerance
+%
 function [bin] = pointsInPlane(surfParam, depthPts, tolerance)
 
     dim = size(depthPts);

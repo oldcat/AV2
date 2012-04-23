@@ -1,3 +1,5 @@
+% Converts a number to a location in a 2D array
+%
 function point = num2point(number, dim)
     
     point = zeros(1,2);

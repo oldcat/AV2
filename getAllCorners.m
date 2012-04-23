@@ -1,3 +1,9 @@
+% This function takes the corners obtained from the corner finding algorithm,
+% takes the bottom corner and the longer of the 2 lines it is an endpoint of,
+% lets that be the bottom line of the quadrilateral, then calculates where
+% it expects the top 2 corners to be given knowlegde of the shape and
+% proportions of the quadrilateral, then orders the points appropriately
+
 function orderedCorners = getAllCorners(lengths, numlines, datalines, figN)
 
     corners = zeros(4,2);

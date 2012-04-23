@@ -1,3 +1,5 @@
+% Converts a location in a 2D array to a number
+%
 function number = point2num(point, dim)
 
     if (point(1) > dim(1)) | (point(2) > dim(2))

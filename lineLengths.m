@@ -1,3 +1,5 @@
+% Calculates the length of each line in datalines
+
 function lengths = lineLengths(numlines, datalines)
 
     lengths = zeros(numlines,1);

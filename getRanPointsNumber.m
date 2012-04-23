@@ -1,3 +1,5 @@
+% get a number of random point references from a total number of points
+%
 function [points] = getRanPointsNumber(totalPoints, numPointsToReturn)
     
     if(numPointsToReturn > totalPoints || numPointsToReturn <= 0)

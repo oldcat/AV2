@@ -1,3 +1,7 @@
+% Loads the field image and remaps it, using a homographic 
+% transfer, to the necessary coordinates for it to be 
+% subsequently overlaid onto another image
+
 function outimage = remapField()
     field = importdata('field.jpg', 'jpg');
     [h,w,c] = size(field);
