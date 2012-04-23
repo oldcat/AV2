@@ -1,6 +1,6 @@
-Introduction - Oldcat
+Introduction - Oldcat DONE
 
-Data structure modification - Oldcat
+Data structure modification - Oldcat DONE
 - colour images
 - depth data
 
@@ -8,11 +8,11 @@ Overlay field image
 - homographic transfer - Murray
 
 Extract man
-- background subtraction using depth data - Oldcat
+- background subtraction using depth data - Oldcat DONE
 
 Extract black quad
 - 2D get bin image - Murray
-- 3D get bin image - Oldcat
+- 3D get bin image - Oldcat DONE
 - compare methods - Oldcat
 
 Overlay black quad
@@ -20,7 +20,7 @@ Overlay black quad
 - corner finding - Murray
 - see prev overlay section - Murray
 
-Conclusion - Oldcat
+Conclusion - Oldcat 
 
 Code inclusion
 

@@ -1,3 +1,6 @@
+% Takes a cell array of images and writes a video with the
+% images as frames.
+%
 function aviWriter(images);
 
     vw = VideoWriter('AV_movie.avi');
