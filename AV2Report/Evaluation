@@ -1,0 +1,17 @@
+We wanted to find out how well our algorithms had performed, to do this we needed an ideal to compare them to. As none of our algorithms had found a way of coping with the black quadrelateral being only partially in the image we only looked at frames where the whole of this area was present. This left us with frames 15-28. In each of these images the 4 corners were selected manually in the image, these corners were then used to create the perfect binary image representing the pixels within the area.
+
+Once we had these binary images we also created binary images created by our algorithms to show where they believed the desired area to be. We then examined these sets of binaries to record the total number of false negatives and false positives each of our algorithms returned. 
+
+\begin{table}
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        Method            & False Positives & False negatives & Total Error Rate & Total Error Rate (Not Inc Missed Images) \\ \hline
+        Hard Thresholding & 8.8\%           & 7.9\%           & 16.7\%           & 9.8\%  \\ 
+        Finding Flat Part & 2.7\%           & 49.9\%          & 52.6\%           & 11.5\% \\
+        \hline
+    \end{tabular}
+\end{table}
+
+We can see that hard thresholding was much more successful with only 16.7% in error compared to 52.6% for our attempts at finding flat parts. This difference is partly so large because in numerous images our flat part finding algorithm did not return any sections. If we ignore the images where we did not find anything our over all error rates for each algorithm drop to 9.8% and 11.5% which is much closer though still shows that hard thresholding is more successful.
+
+On top of this our code for the flat part finding algorithm takes much longer to run than the hard thresholding code. While we do not have an environment in which we can test the time our two systems take reliably it is clear that the flat part finding code takes much longer, well over twice as long, than the hard thresholding code.
